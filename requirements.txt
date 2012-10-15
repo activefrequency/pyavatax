@@ -1,0 +1,4 @@
+# if you use pip to do installations, these are the dependencies
+requests
+# tests are run with pytest
+pytest

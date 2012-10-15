@@ -2,6 +2,10 @@ class AvalaraException(Exception):
     pass
 
 
+class AvalaraServerException(Exception):
+    pass
+
+
 class AvalaraBase(object):
     __fields__ = []
     __contains__ = []
@@ -27,3 +31,5 @@ class AvalaraBase(object):
             for obj in getattr(self, f):
                 data[f].append(obj.tojson())
         return data
+
+import api

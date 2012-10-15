@@ -13,25 +13,29 @@ class Document(AvalaraBase):
 
     __fields__ = ['DocType', 'DocCode', 'DocDate', 'CustomerCode']
     __contains__ = ['Lines', 'Addresses']
-    
+
     def add_line(self, line):
         if isinstance(line, Line):
-            self.lines.append(Line)
+            self.Lines.append(line)
         else:
             raise AvalaraException('%r is not a %r' % (line, Line))
 
     def add_address(self, address):
         if isinstance(address, Address):
-            self.addresses.append(address)
+            self.Addresses.append(address)
         else:
             raise AvalaraException('%r is not a %r' % (address, Address))
+
+    @property
+    def total(self):
+        return sum([ getattr(line, 'Amount') for line in self.Lines ])
 
 class Line(AvalaraBase):
     __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount']
 
 
 class Address(AvalaraBase):
-    __fields__ = ['AddressCode', 'Line1', 'Line2', 'PostalCode']
+    __fields__ = ['AddressCode', 'Line1', 'Line2', 'PostalCode', 'Region', 'Country', 'FipsCode', 'CarrierRoute', 'PostNet', 'AddressType']
 
 
 class TaxAddresses(AvalaraBase):

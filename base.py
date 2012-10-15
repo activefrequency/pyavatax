@@ -1,4 +1,48 @@
-from avalara import AvalaraException, AvalaraBase
+from avalara import AvalaraException
+
+
+def str_to_class(field):
+    import sys
+    import types
+    try:
+        identifier = getattr(sys.modules[__name__], field)
+    except AttributeError:
+        raise NameError("%s doesn't exist." % field)
+    if isinstance(identifier, (types.ClassType, types.TypeType)):
+        return identifier
+    raise TypeError("%s is not a class." % field)
+
+
+class AvalaraBase(object):
+    __fields__ = []
+    __contains__ = []
+
+    def __init__(self, *args, **kwargs):
+        for field in self.__contains__:
+            setattr(self, field, [])
+        self.update(**kwargs)
+
+    def update(self, *args, **kwargs):
+        for k,v in kwargs.iteritems():
+            if k in self.__fields__:
+                setattr(self, k, v)
+            elif k in self.__contains__:
+                klass = str_to_class(k)
+                if isinstance(v, klass): # we already have a python object
+                    getattr(self, k).append(v)
+                elif type(v) == type(dict): # map v into that class
+                    getattr(self, k).append(klass(**v))
+                    
+                    
+    def tojson(self):
+        data = {}
+        for f in self.__fields__:
+            data[f] = getattr(self, f)
+        for f in self.__contains__:
+            data[f] = []
+            for obj in getattr(self, f):
+                data[f].append(obj.tojson())
+        return data
 
 
 class Document(AvalaraBase):

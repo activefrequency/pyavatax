@@ -1,5 +1,6 @@
 import requests
-from avalara import AvalaraBase, AvalaraException, AvalaraServerException
+from avalara import AvalaraException, AvalaraServerException
+from avalara.base import AvalaraBase
 
 
 class BaseAPI(object):
@@ -26,19 +27,19 @@ class BaseAPI(object):
             resp = requests.get(url, **kwargs)
         if resp.status_code == 200:
             if resp.json is None:
-                raise AvalaraServerException(resp.status_code, resp.text)
+                raise AvalaraServerException(resp.status_code, resp.json)
             return resp.json
         else:
-            raise AvalaraServerException(resp.status_code, resp.text)
+            raise AvalaraServerException(resp.status_code, resp.json)
 
 
 class BaseResponse(AvalaraBase):
     SUCCESS = 'Success'
     ERROR = 'Error'
 
-    def __init__(self, response, *args, **kwargs):
-        self.response = response
-        super(BaseResponse, self).__init__(*args, **kwargs)
+    def __init__(self, response_as_json, *args, **kwargs):
+        self.response = response_as_json
+        super(BaseResponse, self).__init__(*args, **response_as_json)
 
     def is_success(self):
         try:
@@ -77,7 +78,7 @@ class API(BaseAPI):
         self.company_code = company_code
     
     def get_tax(self, lat, lng, document):
-        stem = '/'.join(['tax','%.6f,%.6f' % (lat, lng), 'get'])
+        stem = '/'.join([self.VERSION, 'tax','%.6f,%.6f' % (lat, lng), 'get'])
         data = {
             'saleamount': document.total
         }
@@ -85,13 +86,13 @@ class API(BaseAPI):
         return GetTaxResponse(resp)
 
     def post_tax(self, document):
-        stem = '/'.join(['tax','get'])
+        stem = '/'.join([self.VERSION, 'tax','get'])
         data = document.tojson()
         resp = self._post(stem, data)
         return PostTaxResponse(resp)
 
     def cancel_tax(self, document):
-        stem = '/'.join(['tax','cancel'])
+        stem = '/'.join([self.VERSION, 'tax','cancel'])
         data = {
             'CompanyCode': document.CompanyCode,
             'DocType': document.DocType,

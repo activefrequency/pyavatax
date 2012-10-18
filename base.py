@@ -177,6 +177,10 @@ class Document(AvalaraBase):
                     raise AvalaraException('DestinationCode needed for Line Item %r' % line.LineNo)
 
     def validate(self):
+        if len(self.Addresses) == 0:
+            raise AvalaraException('You need Addresses')
+        if len(self.Lines) == 0:
+            raise AvalaraException('You need Line Items')
         self.validate_codes()
 
     @property

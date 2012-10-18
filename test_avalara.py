@@ -52,12 +52,24 @@ def test_gettax():
 # when dealing with line items going to different addresses, i.e. a drop-ship situation
 # don't use the basic add_from/add_to_address helpers just manually match your own 
 # Origin and Destination codes for the addresses and line items
-def test_multiple_address_fail():
+def test_validation():
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    try:
+        doc.validate()
+    except AvalaraException:
+        assert True
+    else:
+        assert False
     from_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     doc.add_from_address(from_address)
     doc.add_to_address(to_address)
+    try:
+        doc.validate()
+    except AvalaraException:
+        assert True
+    else:
+        assert False
     try:
         doc.add_from_address(from_address)
     except AvalaraException:
@@ -69,6 +81,12 @@ def test_multiple_address_fail():
     except AvalaraException:
         assert True
     else:
+        assert False
+    line = Line(Amount=10.00)
+    doc.add_line(line)
+    try:
+        doc.validate()
+    except AvalaraException:
         assert False
 
 

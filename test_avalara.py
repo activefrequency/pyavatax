@@ -8,6 +8,34 @@ import datetime
 def get_api():
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
 
+
+def test_avalara_example():
+    api = get_api()
+    # data example from avalara rest documentation
+    data =  {
+        "DocDate": "2011-05-11",
+        "CustomerCode": "CUST1",
+        "Addresses": [ {
+            "AddressCode": "1",
+            "Line1": "435 Ericksen Avenue Northeast",
+            "Line2": "#250",
+            "PostalCode": "98110"
+            }
+        ],
+        "Lines": [ {
+            "LineNo": "1",
+            "DestinationCode": "1",
+            "OriginCode": "1",
+            "Qty": 1,
+            "Amount": 10
+            }
+        ]
+    }
+    stem = '/'.join([api.VERSION, 'tax','get'])
+    resp = api._post(stem, data)
+    assert resp.status_code == 200
+
+
 def test_gettax():
     api = get_api()
     # A Lat/Long from Avalara's documentation

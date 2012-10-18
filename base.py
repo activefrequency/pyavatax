@@ -2,9 +2,14 @@ from avalara import AvalaraException
 import datetime
 
 
-# gotta be something better than this?
 def isiterable(foo):
-    return True if getattr(foo, '__iter__') else False
+    try:
+        iter(foo)
+    except TypeError:
+        return False
+    else:
+        return True
+
 
 def str_to_class(field):
     import sys

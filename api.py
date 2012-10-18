@@ -1,36 +1,37 @@
 import requests
-from avalara import AvalaraException, AvalaraServerException
+from avalara import AvalaraException, AvalaraServerDetailException
 from avalara.base import AvalaraBase
 
 
 class BaseAPI(object):
 
-    headers = { 'content-type': 'application/json' }
+    headers = { 'Content-Type': 'application/json' }
 
     def _get(self, stem, data):
-        return self._request('GET', stem, data)
+        return self._request('GET', stem, params=data)
 
-    def _post(self, stem, data):
-        return self._request('POST', stem, data)
+    def _post(self, stem, data, params={}):
+        return self._request('POST', stem, params=params, data=data)
 
-    def _request(self, http_method, stem, data):
+    def _request(self, http_method, stem, data={}, params={}):
         url = '%s/%s' % (self.url, stem)
         resp = None
         kwargs = {
-            'params': data,
+            'params': params,
+            'data': data,
             'headers': self.headers,
             'auth': (self.username, self.password)
         }
         if http_method == 'GET':
             resp = requests.get(url, **kwargs)
         elif http_method == 'POST':
-            resp = requests.get(url, **kwargs)
-        if resp.status_code == 200:
+            resp = requests.post(url, **kwargs)
+        if resp.status_code == requests.codes.ok:
             if resp.json is None:
-                raise AvalaraServerException(resp.status_code, resp.json)
+                raise AvalaraServerDetailException(resp.status_code, resp.text, resp.request.data)
             return resp.json
         else:
-            raise AvalaraServerException(resp.status_code, resp.json)
+            raise AvalaraServerDetailException(resp.status_code, resp.json, resp.request.data)
 
 
 class BaseResponse(AvalaraBase):
@@ -84,6 +85,10 @@ class API(BaseAPI):
         }
         resp = self._get(stem, data)
         return GetTaxResponse(resp)
+
+    def post_tax_and_commit(self, document):
+        setattr(document, 'Commit', True)
+        self.post_tax(document)
 
     def post_tax(self, document):
         stem = '/'.join([self.VERSION, 'tax','get'])

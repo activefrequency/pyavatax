@@ -42,6 +42,7 @@ class BaseResponse(AvalaraBase):
         self.response = response_as_json
         super(BaseResponse, self).__init__(*args, **response_as_json)
 
+    @property
     def is_success(self):
         try:
             if self.response.has_key('ResultCode'):
@@ -51,7 +52,8 @@ class BaseResponse(AvalaraBase):
         except AttributeError:
             raise AvalaraException('No response found')
 
-    def get_error(self):
+    @property
+    def error(self):
         if not self.response.has_key('ResultCode'):
             raise AvalaraException('is_error not applicable for this response')
         if self.response.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR:
@@ -108,7 +110,9 @@ class API(BaseAPI):
         return CancelTaxResponse(resp)
 
     def address_validate(self, address):
-        pass
+        stem = '/'.join([self.VERSION, 'address', 'validate' ])
+        resp = self._get(stem, address.tojson())
+        return AddressValidateResponse(resp)
 
 
 class GetTaxResponse(BaseResponse):
@@ -132,4 +136,4 @@ class CancelTaxResponse(BaseResponse):
 
 
 class AddressValidateResponse(BaseResponse):
-    __contains__ = ['address']
+    __has__ = ['Address']

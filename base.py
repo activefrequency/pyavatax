@@ -26,6 +26,7 @@ def str_to_class(field):
 class AvalaraBase(object):
     __fields__ = []
     __contains__ = []
+    __has__ = []
 
     def __init__(self, *args, **kwargs):
         for field in self.__contains__:
@@ -36,13 +37,18 @@ class AvalaraBase(object):
         for k,v in kwargs.iteritems():
             if k in self.__fields__:
                 setattr(self, k, v)
-            elif k in self.__contains__:
+            if k in self.__has__: # has an object
                 klass = str_to_class(k)
-                if isinstance(v, klass): # we already have a python object
+                if isinstance(v, klass): 
+                    setattr(self, k, v)
+                elif type(v) == type({}): 
+                    setattr(self, k, klass(**v))
+            elif k in self.__contains__: # contains many objects
+                klass = str_to_class(k)
+                if isinstance(v, klass): 
                     getattr(self, k).append(v)
-                elif type(v) == type(dict): # map v into that class
+                elif type(v) == type({}): 
                     getattr(self, k).append(klass(**v))
-                    
                     
     def tojson(self):
         if hasattr(self, 'validate'):
@@ -54,6 +60,10 @@ class AvalaraBase(object):
                 if isinstance(v, datetime.date) or isinstance(v, datetime.datetime):
                     v = v.isoformat()
                 data[f] = v
+        for f in self.__has__:
+            if hasattr(self, f):
+                obj = getattr(self, f)
+                data[f] = obj.tojson
         for f in self.__contains__:
             if isiterable(getattr(self, f)):
                 data[f] = []
@@ -76,7 +86,7 @@ class Document(AvalaraBase):
 
     __fields__ = ['DocType', 'DocCode', 'DocDate', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
     __contains__ = ['Lines', 'Addresses' ] # these are only really here for reference
-    # DetailLevel is an outlier, doesn't belong in __contains__ but shouldn't be forgotten about
+    __has__ = ['DetailLevel']
 
     @staticmethod
     def new_sales_order(*args, **kwargs):
@@ -200,7 +210,60 @@ class Line(AvalaraBase):
 class Address(AvalaraBase):
     DEFAULT_FROM_ADDRESS_CODE = "1"
     DEFAULT_TO_ADDRESS_CODE = "2"
-    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'Latitude', 'Longitude', 'PostalCode', 'Region', 'TaxRegionId', 'Country']
+    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'Latitude', 'Longitude', 'PostalCode', 'Region', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
+
+    @property
+    def describe_address_type(self):
+        return {
+            'F': "Firm or company address",
+            'G': "General Delivery address",
+            'H': "High-rise or business complex",
+            'P': "PO Box address",
+            'R': "Rural route address",
+            'S': "Street or residential address",
+            'NA': "No Address Type"
+        }.get(getattr(self, 'AddressType'), 'NA')
+
+    @property
+    def describe_fips_code(self):
+        fips = len(getattr(self, 'FipsCode', ''))
+        if fips == 0:
+            return 'No FipsCode'
+        elif fips >= 1 and fips <= 2:
+            return 'State code'
+        elif fips >= 3 and fips <= 5:
+            return 'County code'
+        elif fips >= 6 and fips <= 10:
+            return 'City code'
+        else:
+            return 'Unknown'
+
+    @property
+    def describe_carrier_route(self):
+        return {
+            'B': "PO Box",
+            'C': "City delivery",
+            'G': "General celivery",
+            'H': "Highway contract",
+            'R': "Rural route",
+            'NA': 'No Carrier Route'
+        }.get(getattr(self, 'CarrierRoute', 'NA'))
+
+    @property
+    def describe_post_net(self):
+        post = len(getattr(self, 'PostNet', ''))
+        if post == 0:
+            return 'No PostNet'
+        elif post >= 1 and post <= 5:
+            return 'Zip code'
+        elif post >= 6 and post <= 9:
+            return 'Plus4 code'
+        elif post >= 10 and post >= 11:
+            return 'Delivery point'
+        elif post == 12:
+            return 'Check digit'
+        else:
+            return 'Unknown'
 
 
 class DetailLevel(AvalaraBase):

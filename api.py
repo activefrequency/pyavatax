@@ -1,11 +1,11 @@
 import requests
 from avalara import AvalaraException, AvalaraServerDetailException
-from avalara.base import AvalaraBase
+from avalara.base import AvalaraBase, Document
 
 
 class BaseAPI(object):
 
-    headers = { 'Content-Type': 'application/json' }
+    headers = { 'Content-Type': 'text/json; charset=utf-8', }
 
     def _get(self, stem, data):
         return self._request('GET', stem, params=data)
@@ -28,10 +28,10 @@ class BaseAPI(object):
             resp = requests.post(url, **kwargs)
         if resp.status_code == requests.codes.ok:
             if resp.json is None:
-                raise AvalaraServerDetailException(resp.status_code, resp.text, resp.request.data)
+                raise AvalaraServerDetailException(resp)
             return resp.json
         else:
-            raise AvalaraServerDetailException(resp.status_code, resp.json, resp.request.data)
+            raise AvalaraServerDetailException(resp)
 
 
 class BaseResponse(AvalaraBase):
@@ -94,17 +94,35 @@ class API(BaseAPI):
 
     def post_tax(self, document):
         stem = '/'.join([self.VERSION, 'tax','get'])
+        setattr(document, 'CompanyCode', self.company_code)
         data = document.tojson()
         resp = self._post(stem, data)
         return PostTaxResponse(resp)
 
-    def cancel_tax(self, document):
+    def cancel_tax_unspecified(self, document):
+        self.cancel_tax(document, document.CANCEL_UNSPECIFIED)
+
+    def cancel_tax_post_failed(self, document):
+        self.cancel_tax(document, document.CANCEL_POST_FAILED)
+
+    def cancel_tax_doc_deleted(self, document):
+        self.cancel_tax(document, document.CANCEL_DOC_DELETED)
+
+    def cancel_tax_doc_voided(self, document):
+        self.cancel_tax(document, document.CANCEL_DOC_VOIDED)
+
+    def cancel_tax_adjustment_canceled(self, document):
+        self.cancel_tax(document, document.CANCEL_CODES)
+    
+    def cancel_tax(self, document, cancel_code):
+        if not cancel_code in Document.CANCEL_CODES:
+            raise AvalaraException("Please pass a valid cancel code")
         stem = '/'.join([self.VERSION, 'tax','cancel'])
         data = {
             'CompanyCode': document.CompanyCode,
             'DocType': document.DocType,
             'DocCode': document.DocCode,
-            'CancelCode': document.CancelCode,
+            'CancelCode': cancel_code,
         }
         resp = self._post(stem, data)
         return CancelTaxResponse(resp)
@@ -126,7 +144,7 @@ class PostTaxResponse(BaseResponse):
 
 
 class CancelTaxResponse(BaseResponse):
-    __contains__ = ['CancelTaxResult']
+    __has__ = ['CancelTaxResult']
 
     def is_success(self):
         try:

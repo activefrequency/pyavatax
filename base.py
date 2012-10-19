@@ -83,8 +83,14 @@ class Document(AvalaraBase):
     DOC_TYPE_PURCHASE_INVOICE = 'PurchaseInvoice'
     DOC_TYPE_INVENTORY_ORDER = 'InventoryTransferOrder'
     DOC_TYPE_INVENTORY_INVOICE = 'InventoryTransferInvoice'
+    CANCEL_UNSPECIFIED = 'Unspecified'
+    CANCEL_POST_FAILED = 'PostFailed'
+    CANCEL_DOC_DELETED = 'DocDeleted'
+    CANCEL_DOC_VOIDED = 'DocVoided'
+    CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
+    CANCEL_CODES = ( CANCEL_UNSPECIFIED, CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED )
 
-    __fields__ = ['DocType', 'DocCode', 'DocDate', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
+    __fields__ = ['DocType', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
     __contains__ = ['Lines', 'Addresses' ] # these are only really here for reference
     __has__ = ['DetailLevel']
 
@@ -199,7 +205,7 @@ class Document(AvalaraBase):
 
 
 class Line(AvalaraBase):
-    __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
+    __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
 
     def __init__(self, *args, **kwargs):
         if not kwargs.has_key('Qty'):

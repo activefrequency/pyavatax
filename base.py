@@ -1,16 +1,7 @@
-from avalara import AvalaraException
-import datetime
+from avalara import AvalaraException, AvalaraBase
 
 
-def isiterable(foo):
-    try:
-        iter(foo)
-    except TypeError:
-        return False
-    else:
-        return True
-
-
+# this func needs to live here
 def str_to_class(field):
     import sys
     import types
@@ -21,58 +12,6 @@ def str_to_class(field):
     if isinstance(identifier, (types.ClassType, types.TypeType)):
         return identifier
     raise TypeError("%s is not a class." % field)
-
-
-class AvalaraBase(object):
-    __fields__ = []
-    __contains__ = []
-    __has__ = []
-
-    def __init__(self, *args, **kwargs):
-        for field in self.__contains__:
-            setattr(self, field, [])
-        self.update(**kwargs)
-
-    def update(self, *args, **kwargs):
-        for k,v in kwargs.iteritems():
-            if k in self.__fields__:
-                setattr(self, k, v)
-            if k in self.__has__: # has an object
-                klass = str_to_class(k)
-                if isinstance(v, klass): 
-                    setattr(self, k, v)
-                elif type(v) == type({}): 
-                    setattr(self, k, klass(**v))
-            elif k in self.__contains__: # contains many objects
-                klass = str_to_class(k)
-                for _v in v:
-                    if isinstance(_v, klass): 
-                        getattr(self, k).append(_v)
-                    elif type(_v) == type({}): 
-                        getattr(self, k).append(klass(**_v))
-                    
-    def tojson(self):
-        if hasattr(self, 'validate'):
-            self.validate()
-        data = {}
-        for f in self.__fields__:
-            if hasattr(self, f):
-                v = getattr(self, f)
-                if isinstance(v, datetime.date) or isinstance(v, datetime.datetime):
-                    v = v.isoformat()
-                data[f] = v
-        for f in self.__has__:
-            if hasattr(self, f):
-                obj = getattr(self, f)
-                data[f] = obj.tojson
-        for f in self.__contains__:
-            if isiterable(getattr(self, f)):
-                data[f] = []
-                for obj in getattr(self, f):
-                    data[f].append(obj.tojson())
-            else:
-                data[f] = obj.tojson()
-        return data
 
 
 class Document(AvalaraBase):
@@ -271,6 +210,10 @@ class Address(AvalaraBase):
             return 'Check digit'
         else:
             return 'Unknown'
+
+
+class Messages(AvalaraBase):
+    __fields__ = ['Summary', 'RefersTo', 'Source', 'Severity']
 
 
 class DetailLevel(AvalaraBase):

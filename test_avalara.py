@@ -1,6 +1,6 @@
 from base import Document, Line, Address
 from api import API
-from avalara import AvalaraException
+from avalara import AvalaraException, AvalaraServerException, AvalaraServerDetailException
 import settings_local
 import datetime
 import pytest
@@ -9,6 +9,14 @@ import pytest
 def get_api():
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
 
+
+@pytest.mark.internals
+def test_exceptions():
+    try:
+        raise AvalaraServerDetailException(None)
+    except AvalaraServerException:
+        assert True
+        
 
 @pytest.mark.simple_example
 def test_avalara_example():
@@ -35,7 +43,7 @@ def test_avalara_example():
         ]
     }
     stem = '/'.join([api.VERSION, 'tax','get'])
-    resp = api._post(stem, data, return_obj=True)
+    resp = api._post(stem, data)
     assert resp.status_code == 200
 
 
@@ -85,7 +93,7 @@ def test_extended_example():
         ],
     }
     stem = '/'.join([api.VERSION, 'tax','get'])
-    resp = api._post(stem, data, return_obj=True)
+    resp = api._post(stem, data)
     assert resp.status_code == 200
 
 
@@ -170,3 +178,15 @@ def test_validate_address():
     validate = api.address_validate(address)
     assert validate.is_success == True
     assert validate.Address.Region == 'WA'
+
+    # this is the right zip code
+    address = Address(Line1="11 Endicott Ave", Line2="Apt 1", PostalCode="02144")
+    validate = api.address_validate(address)
+    assert validate.is_success == True
+    assert validate.Address.Region == 'MA'
+
+    #this is the wrong zip code
+    address = Address(Line1="11 Endicott Ave", Line2="Apt 1", PostalCode="02139")
+    validate = api.address_validate(address)
+    assert validate.is_success == False
+    assert len(validate.Messages) == 1

@@ -157,8 +157,10 @@ def test_posttax():
     line = Line(Amount=10.00)
     doc.add_line(line)
     tax = api.post_tax(doc)
-    assert tax.is_success == True
+    assert tax.is_success == True 
     assert tax.TotalTax > 0
+    assert len(tax.TaxAddresses) == 2
+    assert len(tax.TaxLines) == 1
 
 
 @pytest.mark.address

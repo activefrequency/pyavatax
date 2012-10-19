@@ -45,10 +45,11 @@ class AvalaraBase(object):
                     setattr(self, k, klass(**v))
             elif k in self.__contains__: # contains many objects
                 klass = str_to_class(k)
-                if isinstance(v, klass): 
-                    getattr(self, k).append(v)
-                elif type(v) == type({}): 
-                    getattr(self, k).append(klass(**v))
+                for _v in v:
+                    if isinstance(_v, klass): 
+                        getattr(self, k).append(_v)
+                    elif type(_v) == type({}): 
+                        getattr(self, k).append(klass(**_v))
                     
     def tojson(self):
         if hasattr(self, 'validate'):

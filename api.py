@@ -8,8 +8,22 @@ class BaseAPI(object):
 
     headers = { 'Content-Type': 'text/json; charset=utf-8', }
     proxies = {
-        #'https': 'localhost:8888'
+        # 'https': 'localhost:8888' # useful for testing output with charlesproxy if you're getting a less-than-helpful error respose
     }
+    PRODUCTION_HOST = None
+    DEVELOPMENT_HOST = None 
+    url = None
+    host = None
+    username = None
+    password = None
+    protocol = 'https'
+
+    def __init__(self, username=None, password=None, live=False, **kwargs):
+        self.host = API.PRODUCTION_HOST if live else API.DEVELOPMENT_HOST
+        self.url = "%s://%s" % (self.protocol, self.host)
+        self.username = username 
+        self.headers.update({ 'Host': self.host }) 
+        self.password = password 
 
     def _get(self, stem, data, return_obj=False):
         return self._request('GET', stem, params=data, return_obj=return_obj)
@@ -42,55 +56,16 @@ class BaseAPI(object):
             raise AvalaraServerDetailException(resp)
 
 
-class BaseResponse(AvalaraBase):
-    SUCCESS = 'Success'
-    ERROR = 'Error'
-
-    def __init__(self, response_as_json, *args, **kwargs):
-        self.response = response_as_json
-        super(BaseResponse, self).__init__(*args, **response_as_json)
-
-    @property
-    def is_success(self):
-        try:
-            if self.response.has_key('ResultCode'):
-                return True if self.response.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS else False
-            else:
-                raise AvalaraException('is_success not applicable for this response')
-        except AttributeError:
-            raise AvalaraException('No response found')
-
-    @property
-    def error(self):
-        if not self.response.has_key('ResultCode'):
-            raise AvalaraException('is_error not applicable for this response')
-        if self.response.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR:
-            messages = []
-            for message in self.response.get('Messages'):
-                messages.append((message.get('RefersTo'), message.get('Summary')))
-            raise AvalaraException(messages, self.response)
-        else:
-            raise AvalaraException('This is a successful response')
-
-
 class API(BaseAPI):
-    PRODUCTION_URL = 'rest.avalara.net'
-    DEVELOPMENT_URL = 'development.avalara.net'
-    VERSION = '1.0'
-    url = None
-    host = None
-    protocol = 'https'
-    username = None
-    password = None
-    company_code = None
 
+    PRODUCTION_HOST = 'rest.avalara.net'
+    DEVELOPMENT_HOST = 'development.avalara.net'
+    VERSION = '1.0'
+    company_code = None
+    
     def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
-        self.host = API.PRODUCTION_URL if live else API.DEVELOPMENT_URL
-        self.url = "%s://%s" % (self.protocol, self.host)
-        self.username = account_number
-        self.headers.update({ 'Host': self.host }) 
-        self.password = license_key
         self.company_code = company_code
+        super(API, self).__init__(username=account_number, password=license_key, live=live, **kwargs)
     
     def get_tax(self, lat, lng, document):
         stem = '/'.join([self.VERSION, 'tax','%.6f,%.6f' % (lat, lng), 'get'])
@@ -145,6 +120,37 @@ class API(BaseAPI):
         return AddressValidateResponse(resp)
 
 
+class BaseResponse(AvalaraBase):
+    SUCCESS = 'Success'
+    ERROR = 'Error'
+
+    def __init__(self, response_as_json, *args, **kwargs):
+        self.response = response_as_json
+        super(BaseResponse, self).__init__(*args, **response_as_json)
+
+    @property
+    def is_success(self):
+        try:
+            if self.response.has_key('ResultCode'):
+                return True if self.response.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS else False
+            else:
+                raise AvalaraException('is_success not applicable for this response')
+        except AttributeError:
+            raise AvalaraException('No response found')
+
+    @property
+    def error(self):
+        if not self.response.has_key('ResultCode'):
+            raise AvalaraException('is_error not applicable for this response')
+        if self.response.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR:
+            messages = []
+            for message in self.response.get('Messages'):
+                messages.append((message.get('RefersTo'), message.get('Summary')))
+            raise AvalaraException(messages, self.response)
+        else:
+            raise AvalaraException('This is a successful response')
+
+
 class GetTaxResponse(BaseResponse):
     __fields__ = ['Rate', 'Tax']
     __contains__ = ['TaxDetails']
@@ -152,7 +158,7 @@ class GetTaxResponse(BaseResponse):
 
 class PostTaxResponse(BaseResponse):
     __fields__ = ['DocCode', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate']
-    __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddress']
+    __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddresses']
 
 
 class CancelTaxResponse(BaseResponse):

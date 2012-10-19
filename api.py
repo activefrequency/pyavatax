@@ -1,4 +1,5 @@
 import requests
+import json
 from avalara import AvalaraException, AvalaraServerDetailException
 from avalara.base import AvalaraBase, Document
 
@@ -6,21 +7,25 @@ from avalara.base import AvalaraBase, Document
 class BaseAPI(object):
 
     headers = { 'Content-Type': 'text/json; charset=utf-8', }
+    proxies = {
+        #'https': 'localhost:8888'
+    }
 
-    def _get(self, stem, data):
-        return self._request('GET', stem, params=data)
+    def _get(self, stem, data, return_obj=False):
+        return self._request('GET', stem, params=data, return_obj=return_obj)
 
-    def _post(self, stem, data, params={}):
-        return self._request('POST', stem, params=params, data=data)
+    def _post(self, stem, data, params={}, return_obj=False):
+        return self._request('POST', stem, params=params, data=data, return_obj=return_obj)
 
-    def _request(self, http_method, stem, data={}, params={}):
+    def _request(self, http_method, stem, data={}, params={}, return_obj=False):
         url = '%s/%s' % (self.url, stem)
         resp = None
         kwargs = {
             'params': params,
-            'data': data,
+            'data': json.dumps(data),
             'headers': self.headers,
-            'auth': (self.username, self.password)
+            'auth': (self.username, self.password),
+            'proxies': self.proxies
         }
         if http_method == 'GET':
             resp = requests.get(url, **kwargs)
@@ -29,7 +34,10 @@ class BaseAPI(object):
         if resp.status_code == requests.codes.ok:
             if resp.json is None:
                 raise AvalaraServerDetailException(resp)
-            return resp.json
+            if return_obj:
+                return resp
+            else:
+                return resp.json
         else:
             raise AvalaraServerDetailException(resp)
 
@@ -66,17 +74,21 @@ class BaseResponse(AvalaraBase):
 
 
 class API(BaseAPI):
-    PRODUCTION_URL = 'https://rest.avalara.net'
-    DEVELOPMENT_URL = 'https://development.avalara.net'
+    PRODUCTION_URL = 'rest.avalara.net'
+    DEVELOPMENT_URL = 'development.avalara.net'
     VERSION = '1.0'
     url = None
+    host = None
+    protocol = 'https'
     username = None
     password = None
     company_code = None
 
     def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
-        self.url = API.PRODUCTION_URL if live else API.DEVELOPMENT_URL
+        self.host = API.PRODUCTION_URL if live else API.DEVELOPMENT_URL
+        self.url = "%s://%s" % (self.protocol, self.host)
         self.username = account_number
+        self.headers.update({ 'Host': self.host }) 
         self.password = license_key
         self.company_code = company_code
     

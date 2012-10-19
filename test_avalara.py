@@ -10,7 +10,7 @@ def get_api():
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
 
 
-@pytest.mark.example
+@pytest.mark.simple_example
 def test_avalara_example():
     api = get_api()
     # data example from avalara rest documentation
@@ -35,7 +35,7 @@ def test_avalara_example():
         ]
     }
     stem = '/'.join([api.VERSION, 'tax','get'])
-    resp = api._post(stem, data)
+    resp = api._post(stem, data, return_obj=True)
     assert resp.status_code == 200
 
 
@@ -50,36 +50,25 @@ def test_extended_example():
         "CompanyCode": settings_local.AVALARA_COMPANY_CODE,
         "CustomerCode": "AvaTim",
         "DocCode": "20120613-1",
-        #/* "DetailLevel": "",*/
         "DocType": "SalesOrder",
-        #/* "CustomerUsageType": "",*/
-        #/*"Commit": "",*/
-        #/* "ExemptionNo": "",*/
         "Addresses":
         [
         {
             "AddressCode": "1",
             "Line1": "435 Ericksen Avenue Northeast",
             "Line2": "#250",
-            #/*"Line3": "",*/
             "City": "Bainbridge Island",
             "Region": "WA",
             "PostalCode": "98110",
             "Country": "US",
-        #/*"Latitude": "",*/
-        #/* "Longitude": ""*/
         },
         {               
             "AddressCode": "2",
             "Line1": "7562 Kearney St.",
-            #/*"Line2": "",*/
-            #/*"Line3": "",*/
             "City": "Commerce City",
             "Region": "CO",
             "PostalCode": "80022-1336",
             "Country": "US",                        
-        #/*"Latitude": "",*/
-        #/*"Longitude": ""*/
         },
         ],
         "Lines":
@@ -89,17 +78,14 @@ def test_extended_example():
             "DestinationCode": "2",
             "OriginCode": "1",
             "ItemCode": "AvaDocs",
-            #/*"CustomerUsageType": "",*/
             "Description": "Box of Avalara Documentation",
             "Qty": 1,
             "Amount": "100",
-        #/*  "Discounted": "",*/
-        #/* "TaxIncluded": ""*/
         },
         ],
     }
     stem = '/'.join([api.VERSION, 'tax','get'])
-    resp = api._post(stem, data)
+    resp = api._post(stem, data, return_obj=True)
     assert resp.status_code == 200
 
 
@@ -158,7 +144,8 @@ def test_validation():
     except AvalaraException:
         assert False
 
-@pytest.mark.tax
+
+@pytest.mark.post_tax
 def test_posttax():
     api = get_api()
     # CustomerCode is just a unique identifier for a customer, often times, an email address or user id
@@ -171,7 +158,7 @@ def test_posttax():
     doc.add_line(line)
     tax = api.post_tax(doc)
     assert tax.is_success == True
-    assert tax.Tax > 0
+    assert tax.TotalTax > 0
 
 
 @pytest.mark.address
@@ -181,16 +168,3 @@ def test_validate_address():
     validate = api.address_validate(address)
     assert validate.is_success == True 
     assert validate.Address.Region == 'WA'
-
-
-@pytest.mark.cancel
-def test_cancel_tax():
-    api = get_api()
-    data =  { 
-        "DocCode": "1000",
-        "CompanyCode": settings_local.AVALARA_COMPANY_CODE, 
-        "DocType" :"SalesInvoice", 
-    }
-    stem = '/'.join([api.VERSION, 'tax','cancel'])
-    resp = api._post(stem, data)
-    assert resp.status_code == 200

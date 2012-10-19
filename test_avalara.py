@@ -168,5 +168,5 @@ def test_validate_address():
     api = get_api()
     address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     validate = api.address_validate(address)
-    assert validate.is_success == True 
+    assert validate.is_success == True
     assert validate.Address.Region == 'WA'

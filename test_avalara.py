@@ -161,6 +161,34 @@ def test_posttax():
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
+    assert len(tax.TaxLines[0].TaxDetails) > 0
+
+
+@pytest.mark.post_tax
+@pytest.mark.cancel_tax
+def test_posttax_commit_cancel():
+    import uuid
+    api = get_api()
+    random_doc_code = uuid.uuid4().hex # you can't post/cancel the same doc code over and over
+    doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00)
+    doc.add_line(line)
+    tax = api.post_tax_and_commit(doc)
+    assert tax.is_success == True 
+    assert tax.TotalTax > 0
+    assert len(tax.TaxAddresses) == 2
+    assert len(tax.TaxLines) == 1
+    assert len(tax.TaxLines[0].TaxDetails) > 0
+    doc.DocType = Document.DOC_TYPE_SALE_INVOICE
+    cancel = api.cancel_tax_unspecified(doc)
+    print cancel.response.request.data
+    print cancel.response.json
+    assert cancel.is_success == True
+    assert cancel.CancelTaxResult
 
 
 @pytest.mark.address
@@ -177,7 +205,12 @@ def test_validate_address():
     assert validate.is_success == True
     assert validate.Address.Region == 'MA'
 
+
+@pytest.mark.address
+@pytest.mark.failure_case
+def test_failure_validate_address():
     #this is the wrong zip code
+    api = get_api()
     address = Address(Line1="11 Endicott Ave", Line2="Apt 1", PostalCode="02139")
     validate = api.address_validate(address)
     assert validate.is_success == False

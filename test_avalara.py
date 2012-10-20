@@ -188,13 +188,14 @@ def test_posttax_commit_cancel():
     line = Line(Amount=10.00)
     doc.add_line(line)
     tax = api.post_tax_and_commit(doc)
+    assert doc.Commit
     assert tax.is_success == True 
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0
     doc.DocType = Document.DOC_TYPE_SALE_INVOICE
-    time.sleep(30) # let avalara system catch up
+    time.sleep(10) # let avalara system catch up
     cancel = api.cancel_tax_unspecified(doc)
     print cancel.response.request.data
     print cancel.response.json

@@ -47,30 +47,31 @@ class API(BaseAPI):
         return tax_resp
 
     def cancel_tax_unspecified(self, document):
-        return self.cancel_tax(document, document.CANCEL_UNSPECIFIED)
+        return self.cancel_tax(document)
 
     def cancel_tax_post_failed(self, document):
-        return self.cancel_tax(document, document.CANCEL_POST_FAILED)
+        return self.cancel_tax(document, cancel_code=document.CANCEL_POST_FAILED)
 
     def cancel_tax_doc_deleted(self, document):
-        return self.cancel_tax(document, document.CANCEL_DOC_DELETED)
+        return self.cancel_tax(document, cancel_code=document.CANCEL_DOC_DELETED)
 
     def cancel_tax_doc_voided(self, document):
-        return self.cancel_tax(document, document.CANCEL_DOC_VOIDED)
+        return self.cancel_tax(document, cancel_code=document.CANCEL_DOC_VOIDED)
 
     def cancel_tax_adjustment_canceled(self, document):
-        return self.cancel_tax(document, document.CANCEL_CODES)
+        return self.cancel_tax(document, cancel_code=document.CANCEL_CODES)
     
     @except_500_and_return
-    def cancel_tax(self, document, cancel_code, doc_id=None):
-        if not cancel_code in Document.CANCEL_CODES:
+    def cancel_tax(self, document, cancel_code=None, doc_id=None):
+        if cancel_code and (not cancel_code in Document.CANCEL_CODES):
             raise AvalaraException("Please pass a valid cancel code")
         stem = '/'.join([self.VERSION, 'tax','cancel'])
         data = {
             'CompanyCode': document.CompanyCode,
             'DocType': document.DocType,
-            'CancelCode': cancel_code,
         }
+        if cancel_code:
+            data.update({'CancelCode': cancel_code})
         if hasattr(document, 'DocCode'):
             data.update({ 'DocCode': document.DocCode })
         _doc_id = None

@@ -143,6 +143,12 @@ class Document(AvalaraBase):
     def total(self):
         return sum([ getattr(line, 'Amount') for line in self.Lines ])
 
+    def update_doc_code_from_response(self, post_tax_response):
+        from avalara.api import PostTaxResponse
+        if not isinstance(post_tax_response, PostTaxResponse):
+            raise AvalaraException('post_tax_response must be a %r' % type(PostTaxResponse))
+        setattr(self, 'DocCode', getattr(post_tax_response, 'DocCode'))
+
 
 class Line(AvalaraBase):
     __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']

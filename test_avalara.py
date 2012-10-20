@@ -148,8 +148,8 @@ def test_validation():
 @pytest.mark.post_tax
 def test_posttax():
     api = get_api()
-    # CustomerCode is just a unique identifier for a customer, often times, an email address or user id
-    doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    # dont pass a doccode
+    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com')
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_from_address(from_address)
@@ -162,6 +162,17 @@ def test_posttax():
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0
+    # make sure i don't have a doccode
+    try:
+        doc.DocCode
+    except AttributeError:
+        assert True
+    else:
+        assert False
+    # move response doc code to document
+    assert tax.DocCode
+    doc.update_doc_code_from_response(tax)
+    assert doc.DocCode
 
 
 @pytest.mark.post_tax

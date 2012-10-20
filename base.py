@@ -30,8 +30,8 @@ class Document(AvalaraBase):
     CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
     CANCEL_CODES = ( CANCEL_UNSPECIFIED, CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED )
 
-    __fields__ = ['DocType', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
-    __contains__ = ['Lines', 'Addresses' ] # these are only really here for reference
+    __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
+    __contains__ = ['Lines', 'Addresses' ] # the automatic parsing in `def update` doesn't work here, but its never invoked here
     __has__ = ['DetailLevel']
 
     @staticmethod
@@ -213,7 +213,7 @@ class Address(AvalaraBase):
 
 
 class Messages(AvalaraBase):
-    __fields__ = ['Summary', 'RefersTo', 'Source', 'Severity']
+    __fields__ = ['Summary', 'RefersTo', 'Source', 'Details', 'Severity']
 
 
 class DetailLevel(AvalaraBase):
@@ -222,6 +222,7 @@ class DetailLevel(AvalaraBase):
 
 class TaxAddresses(AvalaraBase):
     __fields__ = ['Address', 'AddressCode', 'Latitude', 'Longitude', 'City', 'Country', 'PostalCode', 'Region', 'TaxRegionId', 'JurisCode']
+    __contains__ = ['TaxDetails']
 
 
 class TaxDetails(AvalaraBase):
@@ -233,5 +234,7 @@ class TaxLines(AvalaraBase):
     __contains__ = ['TaxDetails']
 
 
-class CancelTaxRequest(AvalaraBase):
+class CancelTaxResult(AvalaraBase):
     __fields__ = ['DocId', 'TransactionId', 'ResultCode']
+
+

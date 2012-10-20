@@ -1,6 +1,6 @@
 from base import Document, Line, Address
 from api import API
-from avalara import AvalaraException, AvalaraServerException, AvalaraServerDetailException
+from avalara import AvalaraException
 import settings_local
 import datetime
 import pytest
@@ -9,14 +9,6 @@ import pytest
 def get_api():
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
 
-
-@pytest.mark.internals
-def test_exceptions():
-    try:
-        raise AvalaraServerDetailException(None)
-    except AvalaraServerException:
-        assert True
-        
 
 @pytest.mark.simple_example
 def test_avalara_example():
@@ -190,3 +182,4 @@ def test_validate_address():
     validate = api.address_validate(address)
     assert validate.is_success == False
     assert len(validate.Messages) == 1
+    assert len(validate.error) == 1

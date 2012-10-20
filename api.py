@@ -1,4 +1,4 @@
-from avalara import BaseResponse, BaseAPI, AvalaraException, AvalaraServerException
+from avalara import BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
 from avalara.base import Document
 
 
@@ -6,8 +6,8 @@ def except_500_and_return(fn):
     def newfn(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
-        except AvalaraServerException as error_response:
-            return error_response
+        except AvalaraServerException as e:
+            return ErrorResponse(e.response)
     return newfn
 
 

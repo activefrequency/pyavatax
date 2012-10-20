@@ -2,6 +2,7 @@ import datetime
 import requests
 import json
 
+
 def isiterable(foo):
     try:
         iter(foo)
@@ -127,8 +128,7 @@ class BaseResponse(AvalaraBase):
 
     def __init__(self, response, *args, **kwargs):
         self.response = response
-        if hasattr(response, 'json'):
-            super(BaseResponse, self).__init__(*args, **response.json)
+        super(BaseResponse, self).__init__(*args, **response.json)
 
     @property
     def details(self):
@@ -149,9 +149,22 @@ class BaseResponse(AvalaraBase):
         if not self.response.json.has_key('ResultCode'):
             raise AvalaraException('error not applicable for this response')
         if self.response.json.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR:
-            return self.message
+            return self.details
         else:
             return False
+
+
+class ErrorResponse(BaseResponse): # represents a 500 Server error
+    __fields__ = ['ResultCode']
+    __contains__ = ['Messages']
+
+    @property
+    def is_success(self):
+        return False # this is always a 500 error
+
+    @property
+    def error(self):
+        return self.details
 
 
 class AvalaraBaseException(Exception):
@@ -162,32 +175,25 @@ class AvalaraException(AvalaraBaseException):
     pass
 
 
-class AvalaraServerException(BaseResponse, AvalaraBaseException): # represents a 500 Server error
-    __fields__ = ['ResultCode']
-    __contains__ = ['Messages']
+class AvalaraServerException(AvalaraBaseException): # raised by a 500 response
 
     def __init__(self, response, *args, **kwargs):
-        if response:
-            self.response = response
-            self.status_code = response.status_code
-            self.raw_response = response.text
-            self.request_data = response.request.data
-            self.method = response.request.method
-            self.url = response.request.full_url
-        super(AvalaraServerException, self).__init__(response)
-
-    @property
-    def is_success(self):
-        return False # this is always a 500 error
+        self.response = response
+        self.status_code = response.status_code
+        self.raw_response = response.text
+        self.request_data = response.request.data
+        self.method = response.request.method
+        self.url = response.request.full_url
+        self.has_details = True if response.json else False
 
     @property
     def full_request_as_string(self):
-        return "Status: %r \n Method: %r, \n URL: %r \n Data: %r \n Errors: %r " % (repr(self.status_code), repr(self.method), repr(self.url), repr(self.request_data), self.error)
+        return "Status: %r \n Method: %r, \n URL: %r \n Data: %r \n Errors: %r " % (repr(self.status_code), repr(self.method), repr(self.url), repr(self.request_data), repr(self.errors))
 
     @property
-    def error(self):
-        if hasattr(self, 'Messages'):
-            return self.details
+    def errors(self):
+        if self.has_details:
+            return ErrorResponse(self.response).details
         else:
             return self.raw_response
 

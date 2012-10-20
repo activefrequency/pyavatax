@@ -132,17 +132,19 @@ class BaseResponse(AvalaraBase):
 
     @property
     def details(self):
-        return [ { m.RefersTo: m.Summary } for m in self.Messages ]
+        try:
+            return [ { m.RefersTo: m.Summary } for m in self.Messages ]
+        except AttributeError: # doesn't have RefersTo
+            return [ { m.Source: m.Summary } for m in self.Messages ]
 
     @property
     def is_success(self):
-        try:
-            if self.response.json.has_key('ResultCode'):
-                return True if self.response.json.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS else False
-            else:
-                raise AvalaraException('is_success not applicable for this response')
-        except AttributeError:
+        if not hasattr(self.response, 'json'):
             raise AvalaraException('No response found')
+        if self.response.json.has_key('ResultCode'):
+            return True if self.response.json.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS else False
+        else:
+            raise AvalaraException('is_success not applicable for this response')
 
     @property
     def error(self):

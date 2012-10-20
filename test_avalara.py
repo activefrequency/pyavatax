@@ -10,7 +10,7 @@ def get_api():
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
 
 
-@pytest.mark.simple_example
+@pytest.mark.example
 def test_avalara_example():
     api = get_api()
     # data example from avalara rest documentation
@@ -39,11 +39,8 @@ def test_avalara_example():
     assert resp.status_code == 200
 
 
-@pytest.mark.extended_example
+@pytest.mark.example
 def test_extended_example():
-    """
-        To see more raw output from the avalara you can run this example
-    """
     api = get_api()
     data = {
         "DocDate": "2012-06-13",

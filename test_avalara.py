@@ -177,6 +177,7 @@ def test_posttax():
 @pytest.mark.cancel_tax
 def test_posttax_commit_cancel():
     import uuid
+    import time
     api = get_api()
     random_doc_code = uuid.uuid4().hex # you can't post/cancel the same doc code over and over
     doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
@@ -193,6 +194,7 @@ def test_posttax_commit_cancel():
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0
     doc.DocType = Document.DOC_TYPE_SALE_INVOICE
+    time.sleep(30) # let avalara system catch up
     cancel = api.cancel_tax_unspecified(doc)
     print cancel.response.request.data
     print cancel.response.json

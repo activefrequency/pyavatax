@@ -156,12 +156,6 @@ def test_posttax():
     doc.add_to_address(to_address)
     line = Line(Amount=10.00)
     doc.add_line(line)
-    tax = api.post_tax(doc)
-    assert tax.is_success == True 
-    assert tax.TotalTax > 0
-    assert len(tax.TaxAddresses) == 2
-    assert len(tax.TaxLines) == 1
-    assert len(tax.TaxLines[0].TaxDetails) > 0
     # make sure i don't have a doccode
     try:
         doc.DocCode
@@ -169,10 +163,14 @@ def test_posttax():
         assert True
     else:
         assert False
-    # move response doc code to document
+    tax = api.post_tax(doc)
+    assert tax.is_success == True 
+    assert tax.TotalTax > 0
+    assert len(tax.TaxAddresses) == 2
+    assert len(tax.TaxLines) == 1
+    assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
-    doc.update_doc_code_from_response(tax)
-    assert doc.DocCode
+    assert doc.DocCode # make sure the doccode moved over
 
 
 @pytest.mark.post_tax

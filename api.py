@@ -41,7 +41,10 @@ class API(BaseAPI):
         setattr(document, 'CompanyCode', self.company_code)
         data = document.todict()
         resp = self._post(stem, data)
-        return PostTaxResponse(resp)
+        tax_resp = PostTaxResponse(resp)
+        if not hasattr(document, 'DocCode'):
+            document.update_doc_code_from_response(tax_resp)
+        return tax_resp
 
     def cancel_tax_unspecified(self, document):
         return self.cancel_tax(document, document.CANCEL_UNSPECIFIED)

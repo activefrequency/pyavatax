@@ -85,18 +85,16 @@ class GetTaxResponse(BaseResponse):
 
 
 class PostTaxResponse(BaseResponse):
-    __fields__ = ['DocCode', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate']
+    __fields__ = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate']
     __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddresses']
 
 
 class CancelTaxResponse(BaseResponse):
     __has__ = ['CancelTaxResult']
 
+    @property
     def is_success(self):
-        try:
-            return True if self.response.get('CancelTaxResult').get('ResultCode') == BaseResponse.SUCCESS else False
-        except IndexError:
-            raise AvalaraException('No response was found')
+        return True if self.CancelTaxResult.ResultCode == BaseResponse.SUCCESS else False
 
 
 class AddressValidateResponse(BaseResponse):

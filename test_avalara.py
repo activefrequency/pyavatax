@@ -1,7 +1,6 @@
-from base import Document, Line, Address
-from api import API
-from avalara import AvalaraException
-import settings_local
+from avalara.base import Document, Line, Address, AvalaraException
+from avalara.api import API
+import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest
 
@@ -13,28 +12,31 @@ def get_api():
 @pytest.mark.example
 def test_avalara_example():
     api = get_api()
-    # data example from avalara rest documentation
-    data =  {
+    data = {
         "DocDate": "2011-05-11",
         "CustomerCode": "CUST1",
         "CompanyCode": settings_local.AVALARA_COMPANY_CODE,
-        "Addresses": [ {
-            "AddressCode": "1",
-            "Line1": "435 Ericksen Avenue Northeast",
-            "Line2": "#250",
-            "PostalCode": "98110"
+        "Addresses":
+        [
+            {
+                "AddressCode": "1",
+                "Line1": "435 Ericksen Avenue Northeast",
+                "Line2": "#250",
+                "PostalCode": "98110"
             }
         ],
-        "Lines": [ {
-            "LineNo": "1",
-            "DestinationCode": "1",
-            "OriginCode": "1",
-            "Qty": 1,
-            "Amount": 10
+        "Lines":
+        [
+            {
+                "LineNo": "1",
+                "DestinationCode": "1",
+                "OriginCode": "1",
+                "Qty": 1,
+                "Amount": 10
             }
         ]
     }
-    stem = '/'.join([api.VERSION, 'tax','get'])
+    stem = '/'.join([api.VERSION, 'tax', 'get'])
     resp = api._post(stem, data)
     assert resp.status_code == 200
 
@@ -50,38 +52,38 @@ def test_extended_example():
         "DocType": "SalesOrder",
         "Addresses":
         [
-        {
-            "AddressCode": "1",
-            "Line1": "435 Ericksen Avenue Northeast",
-            "Line2": "#250",
-            "City": "Bainbridge Island",
-            "Region": "WA",
-            "PostalCode": "98110",
-            "Country": "US",
-        },
-        {               
-            "AddressCode": "2",
-            "Line1": "7562 Kearney St.",
-            "City": "Commerce City",
-            "Region": "CO",
-            "PostalCode": "80022-1336",
-            "Country": "US",                        
-        },
+            {
+                "AddressCode": "1",
+                "Line1": "435 Ericksen Avenue Northeast",
+                "Line2": "#250",
+                "City": "Bainbridge Island",
+                "Region": "WA",
+                "PostalCode": "98110",
+                "Country": "US",
+            },
+            {
+                "AddressCode": "2",
+                "Line1": "7562 Kearney St.",
+                "City": "Commerce City",
+                "Region": "CO",
+                "PostalCode": "80022-1336",
+                "Country": "US",
+            },
         ],
         "Lines":
         [
-        {
-            "LineNo": "1",
-            "DestinationCode": "2",
-            "OriginCode": "1",
-            "ItemCode": "AvaDocs",
-            "Description": "Box of Avalara Documentation",
-            "Qty": 1,
-            "Amount": "100",
-        },
+            {
+                "LineNo": "1",
+                "DestinationCode": "2",
+                "OriginCode": "1",
+                "ItemCode": "AvaDocs",
+                "Description": "Box of Avalara Documentation",
+                "Qty": 1,
+                "Amount": "100",
+            },
         ],
     }
-    stem = '/'.join([api.VERSION, 'tax','get'])
+    stem = '/'.join([api.VERSION, 'tax', 'get'])
     resp = api._post(stem, data)
     assert resp.status_code == 200
 
@@ -90,18 +92,18 @@ def test_extended_example():
 def test_gettax():
     api = get_api()
     # A Lat/Long from Avalara's documentation
-    lat = 47.627935 
+    lat = 47.627935
     lng = -122.51702
     line = Line(Amount=10.00)
     doc = Document()
     doc.add_line(line)
     tax = api.get_tax(lat, lng, doc)
-    assert tax.is_success == True
+    assert tax.is_success is True
     assert tax.Tax > 0
 
 
 # when dealing with line items going to different addresses, i.e. a drop-ship situation
-# don't use the basic add_from/add_to_address helpers just manually match your own 
+# don't use the basic add_from/add_to_address helpers just manually match your own
 # Origin and Destination codes for the addresses and line items
 @pytest.mark.internals
 def test_validation():
@@ -161,13 +163,13 @@ def test_posttax():
     else:
         assert False
     tax = api.post_tax(doc)
-    assert tax.is_success == True 
+    assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
-    assert doc.DocCode # make sure the doccode moved over
+    assert doc.DocCode  # make sure the doccode moved over
 
 
 @pytest.mark.post_tax
@@ -176,7 +178,7 @@ def test_posttax_commit_cancel():
     import uuid
     import time
     api = get_api()
-    random_doc_code = uuid.uuid4().hex # you can't post/cancel the same doc code over and over
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
@@ -184,19 +186,19 @@ def test_posttax_commit_cancel():
     doc.add_to_address(to_address)
     line = Line(Amount=10.00)
     doc.add_line(line)
-    tax = api.post_tax_and_commit(doc)
+    tax = api.post_tax(doc, commit=True)
     assert doc.Commit
-    assert tax.is_success == True 
+    assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0
     doc.DocType = Document.DOC_TYPE_SALE_INVOICE
-    time.sleep(10) # let avalara system catch up
-    cancel = api.cancel_tax_unspecified(doc)
+    time.sleep(10)  # let avalara system catch up
+    cancel = api.cancel_tax(doc)
     print cancel.response.request.data
     print cancel.response.json
-    assert cancel.is_success == True
+    assert cancel.is_success is True
     assert cancel.CancelTaxResult
 
 
@@ -204,14 +206,14 @@ def test_posttax_commit_cancel():
 def test_validate_address():
     api = get_api()
     address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
-    validate = api.address_validate(address)
-    assert validate.is_success == True
+    validate = api.validate_address(address)
+    assert validate.is_success is True
     assert validate.Address.Region == 'WA'
 
     # this is the right zip code
     address = Address(Line1="11 Endicott Ave", Line2="Apt 1", PostalCode="02144")
-    validate = api.address_validate(address)
-    assert validate.is_success == True
+    validate = api.validate_address(address)
+    assert validate.is_success is True
     assert validate.Address.Region == 'MA'
 
 
@@ -221,7 +223,7 @@ def test_failure_validate_address():
     #this is the wrong zip code
     api = get_api()
     address = Address(Line1="11 Endicott Ave", Line2="Apt 1", PostalCode="02139")
-    validate = api.address_validate(address)
-    assert validate.is_success == False
+    validate = api.validate_address(address)
+    assert validate.is_success is False
     assert len(validate.Messages) == 1
     assert len(validate.error) == 1

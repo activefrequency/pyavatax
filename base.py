@@ -1,17 +1,228 @@
-from avalara import AvalaraException, AvalaraBase
+import datetime
+import requests
+import json
 
 
-# this func needs to live here
-def str_to_class(field):
+def str_to_class(klassname):
+    """Returns class of string parameter. Requires class to be in module namespace"""
     import sys
     import types
     try:
-        identifier = getattr(sys.modules[__name__], field)
+        identifier = getattr(sys.modules[__name__], klassname)
     except AttributeError:
-        raise NameError("%s doesn't exist." % field)
+        raise NameError("%s doesn't exist." % klassname)
     if isinstance(identifier, (types.ClassType, types.TypeType)):
         return identifier
-    raise TypeError("%s is not a class." % field)
+    raise TypeError("%s is not a class." % klassname)
+
+
+def isiterable(foo):
+    try:
+        iter(foo)
+    except TypeError:
+        return False
+    else:
+        return True
+
+
+class AvalaraBase(object):
+    __fields__ = []  # a list of simple attributes on this object
+    __contains__ = []  # a list of other objects contained by this object
+    __has__ = []  # a list of single objects contained by this object
+
+    def __init__(self, *args, **kwargs):
+        self.__setup__()
+        self.update(**kwargs)
+
+    def __setup__(self):
+        """Initiate lists for objects contained within this object"""
+        for field in self.__contains__:
+            setattr(self, field, [])
+
+    def update(self, *args, **kwargs):
+        """Updates kwargs onto attributes of self"""
+        for k, v in kwargs.iteritems():
+            if k in self.__fields__:
+                setattr(self, k, v)
+            elif k in self.__has__:  # has an object
+                klass = str_to_class(k)
+                if isinstance(v, klass):
+                    setattr(self, k, v)
+                elif isinstance(v, dict):
+                    setattr(self, k, klass(**v))
+            elif k in self.__contains__:  # contains many objects
+                klass = str_to_class(k)
+                for _v in v:
+                    if isinstance(_v, klass):
+                        getattr(self, k).append(_v)
+                    elif isinstance(_v, dict):
+                        getattr(self, k).append(klass(**_v))
+
+    def todict(self):
+        """Returns a dict of attributes on object"""
+        if hasattr(self, 'validate'):
+            self.validate()
+        data = {}
+        for f in self.__fields__:
+            if hasattr(self, f):
+                v = getattr(self, f)
+                if isinstance(v, datetime.date) or isinstance(v, datetime.datetime):
+                    v = v.isoformat()
+                data[f] = v
+        for f in self.__has__:
+            if hasattr(self, f):
+                obj = getattr(self, f)
+                data[f] = obj.todict()
+        for f in self.__contains__:
+            if isiterable(getattr(self, f)):
+                data[f] = []
+                for obj in getattr(self, f):
+                    data[f].append(obj.todict())
+            else:
+                data[f] = obj.todict()
+        return data
+
+
+class BaseAPI(object):
+
+    headers = {'Content-Type': 'text/json; charset=utf-8'}
+    # useful for testing output with charlesproxy if you're getting a less-than-helpful error respose
+    # if you suspect that headers are causing a problem with your requests, use this proxy,
+    # the requests library doesn't control all the headers, libraries beneath it create more
+    proxies = {
+        # 'https': 'localhost:8888'
+    }
+    PRODUCTION_HOST = None
+    DEVELOPMENT_HOST = None
+    url = None
+    host = None
+    username = None
+    password = None
+    protocol = 'https'
+
+    def __init__(self, username=None, password=None, live=False, **kwargs):
+        self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST
+        self.url = "%s://%s" % (self.protocol, self.host)
+        self.username = username
+        self.headers.update({'Host': self.host})
+        self.password = password
+
+    def _get(self, stem, data):
+        return self._request('GET', stem, params=data)
+
+    def _post(self, stem, data, params={}):
+        return self._request('POST', stem, params=params, data=data)
+
+    def _request(self, http_method, stem, data={}, params={}):
+        url = '%s/%s' % (self.url, stem)
+        resp = None
+        kwargs = {
+            'params': params,
+            'data': json.dumps(data),
+            'headers': self.headers,
+            'auth': (self.username, self.password),
+            'proxies': self.proxies
+        }
+        if http_method == 'GET':
+            resp = requests.get(url, **kwargs)
+        elif http_method == 'POST':
+            resp = requests.post(url, **kwargs)
+        if resp.status_code == requests.codes.ok:
+            if resp.json is None:
+                raise AvalaraServerDetailException(resp)
+            return resp
+        else:
+            raise AvalaraServerDetailException(resp)
+
+
+class BaseResponse(AvalaraBase):
+    SUCCESS = 'Success'
+    ERROR = 'Error'
+    __fields__ = ['ResultCode']
+    __contains__ = ['Messages']
+
+    def __init__(self, response, *args, **kwargs):
+        self.response = response
+        super(BaseResponse, self).__init__(*args, **response.json)
+
+    @property
+    def details(self):
+        """Return the level of response detail we have"""
+        try:
+            return [{m.RefersTo: m.Summary} for m in self.Messages]
+        except AttributeError:  # doesn't have RefersTo
+            return [{m.Source: m.Summary} for m in self.Messages]
+
+    @property
+    def is_success(self):
+        if not hasattr(self.response, 'json'):
+            raise AvalaraException('No response found')
+        if 'ResultCode' not in self.response.json:
+            raise AvalaraException('is_success not applicable for this response')
+        cond = self.response.json.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS
+        return True if cond else False
+
+    @property
+    def error(self):
+        if 'ResultCode' not in self.response.json:
+            raise AvalaraException('error not applicable for this response')
+        cond = self.response.json.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR
+        return self.details if cond else False
+
+
+class ErrorResponse(BaseResponse):  # represents a 500 Server error
+    __fields__ = ['ResultCode']
+    __contains__ = ['Messages']
+
+    @property
+    def is_success(self):
+        return False  # this is always a 500 error
+
+    @property
+    def error(self):
+        return self.details
+
+
+class AvalaraBaseException(Exception):
+    pass
+
+
+class AvalaraException(AvalaraBaseException):
+    pass
+
+
+class AvalaraServerException(AvalaraBaseException):  # raised by a 500 response
+
+    def __init__(self, response, *args, **kwargs):
+        self.response = response
+        self.status_code = response.status_code
+        self.raw_response = response.text
+        self.request_data = response.request.data
+        self.method = response.request.method
+        self.url = response.request.full_url
+        self.has_details = True if response.json else False
+
+    @property
+    def full_request_as_string(self):
+        """Returns all the info we have about the request and response"""
+        fmt = "Status: %r \n Method: %r, \n URL: %r \n Data: %r \n Errors: %r "
+        return fmt % (repr(self.status_code), repr(self.method), repr(self.url), repr(self.request_data), repr(self.errors))
+
+    @property
+    def errors(self):
+        return ErrorResponse(self.response).details if self.has_details else self.raw_response
+
+    def __str__(self):
+        return "%r, %r" % (repr(self.status_code), repr(self.url))
+
+
+class AvalaraServerDetailException(AvalaraServerException):
+    """Useful for seeing more detail through the tester and logs
+    We always throw this exception, though you may catch
+    AvalaraServerException if you don't care to see the details"""
+
+    def __str__(self):
+        return self.full_request_as_string
 
 
 class Document(AvalaraBase):
@@ -27,10 +238,10 @@ class Document(AvalaraBase):
     CANCEL_DOC_DELETED = 'DocDeleted'
     CANCEL_DOC_VOIDED = 'DocVoided'
     CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
-    CANCEL_CODES = ( CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED )
+    CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
 
-    __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType','PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
-    __contains__ = ['Lines', 'Addresses' ] # the automatic parsing in `def update` doesn't work here, but its never invoked here
+    __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
+    __contains__ = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
     __has__ = ['DetailLevel']
 
     @staticmethod
@@ -78,58 +289,52 @@ class Document(AvalaraBase):
             setattr(self, 'DetailLevel', detail_level)
         else:
             raise AvalaraException('%r is not a %r' % (detail_level, DetailLevel))
-            
+
     def add_line(self, line):
-        if isinstance(line, Line):
-            if not hasattr(line, 'LineNo'):
-                count = len(self.Lines)
-                setattr(line, 'LineNo', count + 1) #start at one
-            self.Lines.append(line)
-        else:
+        if not isinstance(line, Line):
             raise AvalaraException('%r is not a %r' % (line, Line))
+        if not hasattr(line, 'LineNo'):
+            count = len(self.Lines)
+            setattr(line, 'LineNo', count + 1)  # start at one
+        self.Lines.append(line)
 
     def add_from_address(self, address):
         if hasattr(self, 'from_address_code'):
             raise AvalaraException('You have already set a from address. If you are doing something beyond a simple order, just use the `add_address` method')
-        if isinstance(address, Address):
-            if not hasattr(address, 'AddressCode'):
-                setattr(address, 'AddressCode', Address.DEFAULT_FROM_ADDRESS_CODE)
-            self.from_address_code = getattr(address, 'AddressCode')
-            self.Addresses.append(address)
-        else:
+        if not isinstance(address, Address):
             raise AvalaraException('%r is not a %r' % (address, Address))
+        if not hasattr(address, 'AddressCode'):
+            setattr(address, 'AddressCode', Address.DEFAULT_FROM_ADDRESS_CODE)
+        self.from_address_code = getattr(address, 'AddressCode')
+        self.Addresses.append(address)
 
     def add_to_address(self, address):
         if hasattr(self, 'to_address_code'):
             raise AvalaraException('You have already set a to address. If you are doing something beyond a simple order, just use the `add_address` method')
-        if isinstance(address, Address):
-            if not hasattr(address, 'AddressCode'):
-                setattr(address, 'AddressCode', Address.DEFAULT_TO_ADDRESS_CODE)
-            self.to_address_code = getattr(address, 'AddressCode')
-            self.Addresses.append(address)
-        else:
+        if not isinstance(address, Address):
             raise AvalaraException('%r is not a %r' % (address, Address))
+        if not hasattr(address, 'AddressCode'):
+            setattr(address, 'AddressCode', Address.DEFAULT_TO_ADDRESS_CODE)
+        self.to_address_code = getattr(address, 'AddressCode')
+        self.Addresses.append(address)
 
     def add_address(self, address):
-        if isinstance(address, Address):
-            self.Address.append(address)
-        else:
+        if not isinstance(address, Address):
             raise AvalaraException('%r is not a %r' % (address, Address))
+        self.Address.append(address)
 
     # look through line items making sure that origin and destination codes are set
     # set defaults if they exist, raise exception if we are missing something
     def validate_codes(self):
         for line in self.Lines:
             if not hasattr(line, 'OriginCode'):
-                if hasattr(self, 'from_address_code'):
-                    line.OriginCode = self.from_address_code
-                else:
+                if not hasattr(self, 'from_address_code'):
                     raise AvalaraException('Origin Code needed for Line Item %r' % line.LineNo)
+                line.OriginCode = self.from_address_code
             if not hasattr(Line, 'DestinationCode'):
-                if hasattr(self, 'to_address_code'):
-                    line.DestinationCode = self.to_address_code
-                else:
+                if not hasattr(self, 'to_address_code'):
                     raise AvalaraException('DestinationCode needed for Line Item %r' % line.LineNo)
+                line.DestinationCode = self.to_address_code
 
     def validate(self):
         if len(self.Addresses) == 0:
@@ -140,9 +345,10 @@ class Document(AvalaraBase):
 
     @property
     def total(self):
-        return sum([ getattr(line, 'Amount') for line in self.Lines ])
+        return sum([getattr(line, 'Amount') for line in self.Lines])
 
     def update_doc_code_from_response(self, post_tax_response):
+        """Sets the DocCode on the Document based on the response if Document does not have a DocCode"""
         from avalara.api import PostTaxResponse
         if not isinstance(post_tax_response, PostTaxResponse):
             raise AvalaraException('post_tax_response must be a %r' % type(PostTaxResponse))
@@ -153,7 +359,7 @@ class Line(AvalaraBase):
     __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
 
     def __init__(self, *args, **kwargs):
-        if not kwargs.has_key('Qty'):
+        if 'Qty' not in kwargs:
             kwargs.update({'Qty': 1})
         return super(Line, self).__init__(*args, **kwargs)
 
@@ -165,6 +371,7 @@ class Address(AvalaraBase):
 
     @property
     def describe_address_type(self):
+        """Returns human-readable description"""
         return {
             'F': "Firm or company address",
             'G': "General Delivery address",
@@ -177,6 +384,7 @@ class Address(AvalaraBase):
 
     @property
     def describe_fips_code(self):
+        """Returns human-readable description"""
         fips = len(getattr(self, 'FipsCode', ''))
         if fips == 0:
             return 'No FipsCode'
@@ -191,6 +399,7 @@ class Address(AvalaraBase):
 
     @property
     def describe_carrier_route(self):
+        """Returns human-readable description"""
         return {
             'B': "PO Box",
             'C': "City delivery",
@@ -202,6 +411,7 @@ class Address(AvalaraBase):
 
     @property
     def describe_post_net(self):
+        """Returns human-readable description"""
         post = len(getattr(self, 'PostNet', ''))
         if post == 0:
             return 'No PostNet'
@@ -241,5 +451,3 @@ class TaxLines(AvalaraBase):
 
 class CancelTaxResult(AvalaraBase):
     __fields__ = ['DocId', 'TransactionId', 'ResultCode']
-
-

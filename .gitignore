@@ -1,0 +1,5 @@
+*.pyc
+*.swp
+MANIFEST
+docs/build
+settings_local.py

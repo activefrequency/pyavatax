@@ -26,6 +26,7 @@ def isiterable(foo):
 
 
 class AvalaraBase(object):
+    """Base object for parsing and outputting json"""
     __fields__ = []  # a list of simple attributes on this object
     __contains__ = []  # a list of other objects contained by this object
     __has__ = []  # a list of single objects contained by this object
@@ -84,6 +85,7 @@ class AvalaraBase(object):
 
 
 class BaseAPI(object):
+    """Handles HTTP and requests library"""
 
     headers = {'Content-Type': 'text/json; charset=utf-8'}
     # useful for testing output with charlesproxy if you're getting a less-than-helpful error respose
@@ -136,6 +138,7 @@ class BaseAPI(object):
 
 
 class BaseResponse(AvalaraBase):
+    """Common functionality for handling Avalara server responses"""
     SUCCESS = 'Success'
     ERROR = 'Error'
     __fields__ = ['ResultCode']
@@ -170,7 +173,8 @@ class BaseResponse(AvalaraBase):
         return self.details if cond else False
 
 
-class ErrorResponse(BaseResponse):  # represents a 500 Server error
+class ErrorResponse(BaseResponse):
+    """Common error case functionality from a 500 error"""
     __fields__ = ['ResultCode']
     __contains__ = ['Messages']
 
@@ -180,6 +184,10 @@ class ErrorResponse(BaseResponse):  # represents a 500 Server error
 
     @property
     def error(self):
+        """Returns a list of tuples. The first position in the tuple is
+        either the offending field that threw an error, or the class in
+        the Avalara system that threw it. The second position is a
+        human-readable message from Avalara"""
         return self.details
 
 
@@ -188,10 +196,12 @@ class AvalaraBaseException(Exception):
 
 
 class AvalaraException(AvalaraBaseException):
+    """Thrown when operating unsuccessfully with document, address, line, etc objects"""
     pass
 
 
-class AvalaraServerException(AvalaraBaseException):  # raised by a 500 response
+class AvalaraServerException(AvalaraBaseException):
+    """Used internally to handle 500 error responses"""
 
     def __init__(self, response, *args, **kwargs):
         self.response = response
@@ -226,6 +236,7 @@ class AvalaraServerDetailException(AvalaraServerException):
 
 
 class Document(AvalaraBase):
+    """Represents the Avalara Document"""
     DOC_TYPE_SALE_ORDER = 'SalesOrder'
     DOC_TYPE_SALE_INVOICE = 'SalesInvoice'
     DOC_TYPE_RETURN_ORDER = 'ReturnOrder'
@@ -323,9 +334,9 @@ class Document(AvalaraBase):
             raise AvalaraException('%r is not a %r' % (address, Address))
         self.Address.append(address)
 
-    # look through line items making sure that origin and destination codes are set
-    # set defaults if they exist, raise exception if we are missing something
     def validate_codes(self):
+        """Look through line items making sure that origin and destination codes are set
+            set defaults if they exist, raise exception if we are missing something"""
         for line in self.Lines:
             if not hasattr(line, 'OriginCode'):
                 if not hasattr(self, 'from_address_code'):
@@ -337,6 +348,7 @@ class Document(AvalaraBase):
                 line.DestinationCode = self.to_address_code
 
     def validate(self):
+        """Ensures we have addresses and line items. Then calls a further check"""
         if len(self.Addresses) == 0:
             raise AvalaraException('You need Addresses')
         if len(self.Lines) == 0:
@@ -345,6 +357,7 @@ class Document(AvalaraBase):
 
     @property
     def total(self):
+        """Helper representing the line items total amount for tax. Used in GetTax call"""
         return sum([getattr(line, 'Amount') for line in self.Lines])
 
     def update_doc_code_from_response(self, post_tax_response):
@@ -356,6 +369,7 @@ class Document(AvalaraBase):
 
 
 class Line(AvalaraBase):
+    """Represents an Avalara Line"""
     __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
 
     def __init__(self, *args, **kwargs):
@@ -365,6 +379,7 @@ class Line(AvalaraBase):
 
 
 class Address(AvalaraBase):
+    """Represents an Avalara Address"""
     DEFAULT_FROM_ADDRESS_CODE = "1"
     DEFAULT_TO_ADDRESS_CODE = "2"
     __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'Latitude', 'Longitude', 'PostalCode', 'Region', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
@@ -428,26 +443,33 @@ class Address(AvalaraBase):
 
 
 class Messages(AvalaraBase):
+    """Represents error messages dictionary response from Avalara"""
     __fields__ = ['Summary', 'RefersTo', 'Source', 'Details', 'Severity']
 
 
 class DetailLevel(AvalaraBase):
+    """Represents Avalara Detail Level request"""
     __fields__ = ['Line', 'Summary', 'Document', 'Tax', 'Diagnostic']
 
 
 class TaxAddresses(AvalaraBase):
+    """Represents TaxAddress response from Avalara"""
     __fields__ = ['Address', 'AddressCode', 'Latitude', 'Longitude', 'City', 'Country', 'PostalCode', 'Region', 'TaxRegionId', 'JurisCode']
     __contains__ = ['TaxDetails']
 
 
 class TaxDetails(AvalaraBase):
+    """Represents TaxDetails response from Avalara"""
     __fields__ = ['Country', 'Region', 'JurisType', 'Taxable', 'Rate', 'Tax', 'JurisName', 'TaxName']
 
 
 class TaxLines(AvalaraBase):
+    """Represents TaxLines response from Avalara"""
     __fields__ = ['LineNo', 'TaxCode', 'Taxability', 'Taxable', 'Rate', 'Tax', 'Discount', 'TaxCalculated', 'Exemption']
     __contains__ = ['TaxDetails']
 
 
 class CancelTaxResult(AvalaraBase):
+    """Represents CancelTaxResult response from Avalara"""
     __fields__ = ['DocId', 'TransactionId', 'ResultCode']
+    __contains__ = ['Messages']

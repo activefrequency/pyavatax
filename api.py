@@ -71,7 +71,7 @@ class API(BaseAPI):
     def validate_address(self, address):
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
-        return AddressValidateResponse(resp)
+        return ValidateAddressResponse(resp)
 
 
 class GetTaxResponse(BaseResponse):
@@ -87,10 +87,31 @@ class PostTaxResponse(BaseResponse):
 class CancelTaxResponse(BaseResponse):
     __has__ = ['CancelTaxResult']
 
+    # cancel tax just had to structure this differently didn't they
+    @property
+    def details(self):
+        """Return the level of response detail we have"""
+        try:
+            return [{m.RefersTo: m.Summary} for m in self.CancelTaxResult.Messages]
+        except AttributeError:  # doesn't have RefersTo
+            return [{m.Source: m.Summary} for m in self.CancelTaxResult.Messages]
+
     @property
     def is_success(self):
-        return True if self.CancelTaxResult.ResultCode == BaseResponse.SUCCESS else False
+        try:
+            return True if self.CancelTaxResult.ResultCode == BaseResponse.SUCCESS else False
+        except AttributeError:
+            raise AvalaraException('error not applicable for this response')
+
+    @property
+    def error(self):
+        cond = False
+        try:
+            cond = self.CancelTaxResult.ResultCode == BaseResponse.ERROR
+        except AttributeError:
+            raise AvalaraException('error not applicable for this response')
+        return self.details if cond else False
 
 
-class AddressValidateResponse(BaseResponse):
+class ValidateAddressResponse(BaseResponse):
     __has__ = ['Address']

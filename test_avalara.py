@@ -197,7 +197,7 @@ def test_posttax_commit_cancel():
     time.sleep(10)  # let avalara system catch up
     cancel = api.cancel_tax(doc)
     print cancel.response.request.data
-    print cancel.response.json
+    print cancel.error
     assert cancel.is_success is True
     assert cancel.CancelTaxResult
 

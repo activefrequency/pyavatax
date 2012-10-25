@@ -1,7 +1,7 @@
 .. _api:
 
-.. module:: avatax.api
-.. currentmodule:: avatax.api
+.. module:: pyavatax.api
+.. currentmodule:: pyavatax.api
 
 API Object
 ===================
@@ -11,8 +11,8 @@ API Object
     :undoc-members:
 
 
-.. module:: avatax.base
-.. currentmodule:: avatax.base
+.. module:: pyavatax.base
+.. currentmodule:: pyavatax.base
 
 
 
@@ -28,7 +28,7 @@ Avalara Document
     :undoc-members:
 
 Document static factory methods
-----------------------
+-------------------------------
 
 The ``new_xxxxx_order`` and ``new_xxxxx_invoice`` calls are static factory functions on the Document class to create a corresponding Document with the intended DocType
 
@@ -50,7 +50,7 @@ Avalara Address
     :undoc-members:
 
 
-.. currentmodule:: avatax.base
+.. currentmodule:: pyavatax.base
 
 Avalara Response Representations
 ================================
@@ -60,7 +60,7 @@ Avalara Response Representations
 .. autoclass:: ErrorResponse
     :members:
 
-.. currentmodule:: avatax.api
+.. currentmodule:: pyavatax.api
 
 GetTax Response
 ---------------
@@ -70,14 +70,14 @@ GetTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.base
+.. currentmodule:: pyavatax.base
 
 .. autoclass:: TaxDetails
     :members:
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.api
+.. currentmodule:: pyavatax.api
 
 
 PostTax Response
@@ -88,7 +88,7 @@ PostTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.base
+.. currentmodule:: pyavatax.base
 
 .. autoclass:: TaxLines
     :members:
@@ -105,7 +105,7 @@ PostTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.api
+.. currentmodule:: pyavatax.api
 
 
 CancelTax Response
@@ -116,14 +116,14 @@ CancelTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.base
+.. currentmodule:: pyavatax.base
 
 .. autoclass:: CancelTaxResult
     :members:
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.api
+.. currentmodule:: pyavatax.api
 
 
 ValidateAddress Response
@@ -134,7 +134,7 @@ ValidateAddress Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avatax.base
+.. currentmodule:: pyavatax.base
 
 .. autoclass:: Address
     :members:

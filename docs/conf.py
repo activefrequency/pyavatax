@@ -244,4 +244,4 @@ texinfo_documents = [
 # put parent dir onto path
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 if not on_rtd:
-    sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..', '..')))
+    sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..',)))

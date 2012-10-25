@@ -20,8 +20,8 @@ Instantiating the API
 ---------------------
 Looks like
 ::
-    import avatax
-    api = avatax.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
+    import pyavatax
+    api = pyavatax.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
 
 Once you have an account with AvaTax their dashboard page contains the account number and license number. You get to choose a meaningful company code.
 
@@ -30,10 +30,10 @@ Creating a Document
 -------------------
 Looks like
 ::
-    import avatax
-    doc = avatax.Document(**kwargs)
-    address = avatax.Address(**kwargs)
-    line_item = avatax.Line(**kwargs)
+    import pyavatax
+    doc = pyavatax.Document(**kwargs)
+    address = pyavatax.Address(**kwargs)
+    line_item = pyavatax.Line(**kwargs)
 
 Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the document. Any keys that are not AvaTax fields will be silently ignored. All the keys **do use AvaTax's camel-case notation**.
 ::

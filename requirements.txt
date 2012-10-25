@@ -2,5 +2,6 @@
 
 requests  # for all http connection
 decorator  # to preserve introspection funcsig integrity
-# tests are run with pytest
+# tests are run with pytest, fixtures for tests as well
 pytest
+testfixtures

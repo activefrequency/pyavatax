@@ -106,7 +106,7 @@ class BaseAPI(object):
         self.headers = BaseAPI.default_headers.update({'Host': self.host})
         self.password = password
         self.timeout = timeout or BaseAPI.default_timeout
-        BaseAPI.logger = logging.getLogger('pyavatax')
+        BaseAPI.logger = logging.getLogger('pyavatax.api')
 
     def _get(self, stem, data):
         return self._request('GET', stem, params=data)
@@ -124,7 +124,6 @@ class BaseAPI(object):
             'proxies': BaseAPI.proxies,
             'timeout': self.timeout
         }
-        print url
         resp = None
         try:
             if http_method == 'GET':

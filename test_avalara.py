@@ -1,12 +1,13 @@
-from pyavatax.base import Document, Line, Address, AvalaraException
+from pyavatax.base import Document, Line, Address, AvalaraException, AvalaraServerNotReachableException
 from pyavatax.api import API
 import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest
+from testfixtures import LogCapture
 
 
-def get_api():
-    return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False)
+def get_api(timeout=None):
+    return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False, timeout=timeout)
 
 
 @pytest.mark.example
@@ -145,24 +146,26 @@ def test_validation():
 
 
 @pytest.mark.post_tax
+@pytest.mark.logging
 def test_posttax():
-    api = get_api()
-    # dont pass a doccode
-    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com')
-    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
-    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
-    doc.add_from_address(from_address)
-    doc.add_to_address(to_address)
-    line = Line(Amount=10.00)
-    doc.add_line(line)
-    # make sure i don't have a doccode
-    try:
-        doc.DocCode
-    except AttributeError:
-        assert True
-    else:
-        assert False
-    tax = api.post_tax(doc)
+    with LogCapture('pyavatax.api') as l:
+        api = get_api()
+        # dont pass a doccode
+        doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com')
+        to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+        from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+        doc.add_from_address(from_address)
+        doc.add_to_address(to_address)
+        line = Line(Amount=10.00)
+        doc.add_line(line)
+        # make sure i don't have a doccode
+        try:
+            doc.DocCode
+        except AttributeError:
+            assert True
+        else:
+            assert False
+        tax = api.post_tax(doc)
     assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
@@ -170,6 +173,30 @@ def test_posttax():
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
     assert doc.DocCode  # make sure the doccode moved over
+    l.check(
+        ('pyavatax.api', 'INFO', '"POST", %s, %s%s' % (None, api.url, '/'.join([API.VERSION, 'tax', 'get']))),
+        ('pyavatax.api', 'DEBUG', 'AvaTax assigned %s as DocCode' % doc.DocCode)
+    )
+
+
+@pytest.mark.logging
+def test_timeout():
+    with LogCapture('pyavatax.api') as l:
+        api = get_api(timeout=0.00001)
+        lat = 47.627935
+        lng = -122.51702
+        line = Line(Amount=10.00)
+        doc = Document()
+        doc.add_line(line)
+        try:
+            api.get_tax(lat, lng, doc)
+        except AvalaraServerNotReachableException:
+            assert True
+        else:
+            assert False
+    l.check(
+        ('pyavatax.api', 'ERROR', "HTTPSConnectionPool(host='development.avalara.net', port=443): Request timed out. (timeout=1e-05)")
+    )
 
 
 @pytest.mark.post_tax

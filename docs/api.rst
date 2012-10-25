@@ -1,7 +1,7 @@
 .. _api:
 
-.. module:: avalara.api
-.. currentmodule:: avalara.api
+.. module:: avatax.api
+.. currentmodule:: avatax.api
 
 API Object
 ===================
@@ -11,8 +11,8 @@ API Object
     :undoc-members:
 
 
-.. module:: avalara.base
-.. currentmodule:: avalara.base
+.. module:: avatax.base
+.. currentmodule:: avatax.base
 
 
 
@@ -50,7 +50,7 @@ Avalara Address
     :undoc-members:
 
 
-.. currentmodule:: avalara.base
+.. currentmodule:: avatax.base
 
 Avalara Response Representations
 ================================
@@ -60,7 +60,7 @@ Avalara Response Representations
 .. autoclass:: ErrorResponse
     :members:
 
-.. currentmodule:: avalara.api
+.. currentmodule:: avatax.api
 
 GetTax Response
 ---------------
@@ -70,14 +70,14 @@ GetTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.base
+.. currentmodule:: avatax.base
 
 .. autoclass:: TaxDetails
     :members:
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.api
+.. currentmodule:: avatax.api
 
 
 PostTax Response
@@ -88,7 +88,7 @@ PostTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.base
+.. currentmodule:: avatax.base
 
 .. autoclass:: TaxLines
     :members:
@@ -105,7 +105,7 @@ PostTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.api
+.. currentmodule:: avatax.api
 
 
 CancelTax Response
@@ -116,14 +116,14 @@ CancelTax Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.base
+.. currentmodule:: avatax.base
 
 .. autoclass:: CancelTaxResult
     :members:
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.api
+.. currentmodule:: avatax.api
 
 
 ValidateAddress Response
@@ -134,7 +134,7 @@ ValidateAddress Response
     :special-members:
     :undoc-members:
 
-.. currentmodule:: avalara.base
+.. currentmodule:: avatax.base
 
 .. autoclass:: Address
     :members:

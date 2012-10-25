@@ -1,19 +1,19 @@
-.. PyAvalara documentation master file, created by
+.. PyAvaTax documentation master file, created by
    sphinx-quickstart on Wed Oct 24 14:35:06 2012.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-PyAvalara
+PyAvaTax
 =========
 
 Release v\ |version|
 
-What is PyAvalara?
+What is PyAvaTax?
 ------------------
 
-PyAvalara is a python library for easily integrating Avalara's RESTful Tax API Service. You will need an account with Avalara (They have free trials)
+PyAvaTax is a python library for easily integrating Avalara's RESTful AvaTax API Service. You will need an account with Avalara (They have free trials)
 
-Avalara expects a JSON (or XML) POST to their tax/get/ URI like this
+AvaTax expects a JSON (or XML) POST to their tax/get/ URI like this
 ::
     {
         "DocDate": "2012-10-24",

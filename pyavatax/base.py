@@ -373,7 +373,7 @@ class Document(AvalaraBase):
 
     def update_doc_code_from_response(self, post_tax_response):
         """Sets the DocCode on the Document based on the response if Document does not have a DocCode"""
-        from avalara.api import PostTaxResponse
+        from pyavatax.api import PostTaxResponse
         if not isinstance(post_tax_response, PostTaxResponse):
             raise AvalaraException('post_tax_response must be a %r' % type(PostTaxResponse))
         setattr(self, 'DocCode', getattr(post_tax_response, 'DocCode'))

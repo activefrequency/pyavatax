@@ -1,4 +1,4 @@
-from avalara.base import Document, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
+from pyavatax.base import Document, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
 import decorator
 
 @decorator.decorator

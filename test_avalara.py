@@ -1,5 +1,5 @@
-from avalara.base import Document, Line, Address, AvalaraException
-from avalara.api import API
+from pyavatax.base import Document, Line, Address, AvalaraException
+from pyavatax.api import API
 import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest

@@ -32,7 +32,11 @@ class API(BaseAPI):
 
     @except_500_and_return
     def post_tax(self, doc, commit=False):
-        """Performs a HTTP POST to tax/get/"""
+        """Performs a HTTP POST to tax/get/   If commit=True we will 
+        update the document's Commit flag to True, and we will check 
+        the document type to make sure it is capable of being Commited.
+        XXXXXOrder is not capable of being commited. We will change it 
+        to XXXXXXXInvoice, which is capable of being committed"""
         stem = '/'.join([self.VERSION, 'tax', 'get'])
         doc.update(CompanyCode=self.company_code)
         if commit:

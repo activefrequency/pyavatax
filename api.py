@@ -2,13 +2,11 @@ from avalara.base import Document, BaseResponse, BaseAPI, AvalaraException, Aval
 import decorator
 
 @decorator.decorator
-def except_500_and_return(fn):
-    def newfn(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except AvalaraServerException as e:
-            return ErrorResponse(e.response)
-    return newfn
+def except_500_and_return(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except AvalaraServerException as e:
+        return ErrorResponse(e.response)
 
 
 class API(BaseAPI):

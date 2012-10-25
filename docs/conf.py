@@ -242,4 +242,6 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 # put parent dir onto path
-sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..', '..')))
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+if not on_rtd:
+    sys.path.append(os.path.abspath(os.path.join(os.path.realpath(os.path.dirname(__file__)), '..', '..')))

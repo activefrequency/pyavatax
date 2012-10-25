@@ -13,7 +13,7 @@ Installing the Project
 
 ``pip install pyavatax``
 
-If you are using this project via its source files you will find the dependencies of the project in the provided requirements.txt file. Currently the only dependency is the `requests` framework. We use `py.test` for testing, but you don't need to install that to use the library
+If you are using this project via its source files you will find the dependencies of the project in the provided requirements.txt file. We use `py.test` for testing, but you don't need to install that to use the library
 
 
 Instantiating the API

@@ -1,4 +1,6 @@
 # if you use pip to do installations, these are the dependencies
-requests
+
+requests  # for all http connection
+decorator  # to preserve introspection funcsig integrity
 # tests are run with pytest
 pytest

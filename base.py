@@ -149,8 +149,7 @@ class BaseResponse(AvalaraBase):
         super(BaseResponse, self).__init__(*args, **response.json)
 
     @property
-    def details(self):
-        """Return the level of response detail we have"""
+    def _details(self):
         try:
             return [{m.RefersTo: m.Summary} for m in self.Messages]
         except AttributeError:  # doesn't have RefersTo
@@ -158,6 +157,7 @@ class BaseResponse(AvalaraBase):
 
     @property
     def is_success(self):
+        """Returns whether or not the response was successful"""
         if not hasattr(self.response, 'json'):
             raise AvalaraException('No response found')
         if 'ResultCode' not in self.response.json:
@@ -167,10 +167,14 @@ class BaseResponse(AvalaraBase):
 
     @property
     def error(self):
+        """Returns a list of tuples. The first position in the tuple is
+        either the offending field that threw an error, or the class in
+        the Avalara system that threw it. The second position is a
+        human-readable message from Avalara"""
         if 'ResultCode' not in self.response.json:
             raise AvalaraException('error not applicable for this response')
         cond = self.response.json.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR
-        return self.details if cond else False
+        return self._details if cond else False
 
 
 class ErrorResponse(BaseResponse):
@@ -180,6 +184,7 @@ class ErrorResponse(BaseResponse):
 
     @property
     def is_success(self):
+        """Returns whether or not the response was successful"""
         return False  # this is always a 500 error
 
     @property
@@ -188,7 +193,7 @@ class ErrorResponse(BaseResponse):
         either the offending field that threw an error, or the class in
         the Avalara system that threw it. The second position is a
         human-readable message from Avalara"""
-        return self.details
+        return self._details
 
 
 class AvalaraBaseException(Exception):
@@ -220,16 +225,17 @@ class AvalaraServerException(AvalaraBaseException):
 
     @property
     def errors(self):
-        return ErrorResponse(self.response).details if self.has_details else self.raw_response
+        """Will return an ErrorResponse details property, or the raw text server response"""
+        return ErrorResponse(self.response)._details if self.has_details else self.raw_response
 
     def __str__(self):
-        return "%r, %r" % (repr(self.status_code), repr(self.url))
+        return "%r, %r %r" % (repr(self.status_code), repr(self.method), repr(self.url))
 
 
 class AvalaraServerDetailException(AvalaraServerException):
     """Useful for seeing more detail through the tester and logs
     We always throw this exception, though you may catch
-    AvalaraServerException if you don't care to see the details"""
+    AvalaraServerException if you don't care to see the details in the __str__"""
 
     def __str__(self):
         return self.full_request_as_string
@@ -296,12 +302,14 @@ class Document(AvalaraBase):
         return Document(*args, **kwargs)
 
     def set_detail_level(self, detail_level):
+        """Add a DetailLevel instance to this Avalara document"""
         if isinstance(detail_level, DetailLevel):
             setattr(self, 'DetailLevel', detail_level)
         else:
             raise AvalaraException('%r is not a %r' % (detail_level, DetailLevel))
 
     def add_line(self, line):
+        """Adds a Line instance to this document. Will provide a LineNo if you do not"""
         if not isinstance(line, Line):
             raise AvalaraException('%r is not a %r' % (line, Line))
         if not hasattr(line, 'LineNo'):
@@ -310,6 +318,7 @@ class Document(AvalaraBase):
         self.Lines.append(line)
 
     def add_from_address(self, address):
+        """Only use this function when performing a simple shipping operation. The default from address code will be used for this address"""
         if hasattr(self, 'from_address_code'):
             raise AvalaraException('You have already set a from address. If you are doing something beyond a simple order, just use the `add_address` method')
         if not isinstance(address, Address):
@@ -320,6 +329,7 @@ class Document(AvalaraBase):
         self.Addresses.append(address)
 
     def add_to_address(self, address):
+        """Only use this function when performing a simple shipping operation. The default to address code will be used for this address"""
         if hasattr(self, 'to_address_code'):
             raise AvalaraException('You have already set a to address. If you are doing something beyond a simple order, just use the `add_address` method')
         if not isinstance(address, Address):
@@ -330,6 +340,7 @@ class Document(AvalaraBase):
         self.Addresses.append(address)
 
     def add_address(self, address):
+        """Adds an Address instance to this document. Nothing about the address will be changed, you are entirely responsible for it"""
         if not isinstance(address, Address):
             raise AvalaraException('%r is not a %r' % (address, Address))
         self.Address.append(address)
@@ -348,7 +359,7 @@ class Document(AvalaraBase):
                 line.DestinationCode = self.to_address_code
 
     def validate(self):
-        """Ensures we have addresses and line items. Then calls a further check"""
+        """Ensures we have addresses and line items. Then calls validate_codes"""
         if len(self.Addresses) == 0:
             raise AvalaraException('You need Addresses')
         if len(self.Lines) == 0:

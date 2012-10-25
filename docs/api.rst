@@ -3,76 +3,51 @@
 .. module:: avalara.api
 .. currentmodule:: avalara.api
 
-Available API Calls
+API Object
 ===================
 
 .. autoclass:: API
     :members:
-
-"GetTax"
---------
-Performs a HTTP GET to tax/get/
-
-.. automethod:: get_tax
-
-
-"PostTax" 
----------
-Performs a HTTP POST to tax/get/
-
-.. automethod:: post_tax
-
-
-"CancelTax" 
------------
-Performs a HTTP POST to tax/cancel/
-
-.. automethod:: cancel_tax
-
-
-"ValidateAddress" 
------------------
-Performs a HTTP GET to address/validate/
-
-.. automethod:: validate_address
-
+    :undoc-members:
 
 
 .. module:: avalara.base
 .. currentmodule:: avalara.base
 
-Avalara Object Representations
+
+
+Avalara Objects
 ==============================
+
+Avalara Document
+----------------
 
 .. autoclass:: Document
     :members:
     :special-members:
+    :undoc-members:
+
+Document static factory methods
+----------------------
+
+The ``new_xxxxx_order`` and ``new_xxxxx_invoice`` calls are static factory functions on the Document class to create a corresponding Document with the intended DocType
+
+
+Avalara Line
+------------
 
 .. autoclass:: Line
     :members:
     :special-members:
+    :undoc-members:
+
+Avalara Address
+---------------
 
 .. autoclass:: Address
     :members:
     :special-members:
-
-Class methods for creating new documents
-----------------------------------------
-.. automethod:: new_sales_order
-.. automethod:: new_sales_invoice
-.. automethod:: new_return_order
-.. automethod:: new_return_invoice
-.. automethod:: new_purchase_order
-.. automethod:: new_purchase_invoice
-.. automethod:: new_inventory_order
-.. automethod:: new_inventory_invoice
-
-Adding other avalara objects
-----------------------------
-.. automethod:: add_line
-.. automethod:: add_address
-.. automethod:: add_to_address
-.. automethod:: add_from_address
+    :undoc-members:
 
 
 .. currentmodule:: avalara.base
@@ -87,76 +62,93 @@ Avalara Response Representations
 
 .. currentmodule:: avalara.api
 
+GetTax Response
+---------------
+
 .. autoclass:: GetTaxResponse
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.base
 
 .. autoclass:: TaxDetails
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.api
+
+
+PostTax Response
+----------------
 
 .. autoclass:: PostTaxResponse
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.base
 
 .. autoclass:: TaxLines
     :members:
     :special-members:
+    :undoc-members:
 
 .. autoclass:: TaxDetails
     :members:
     :special-members:
+    :undoc-members:
 
 .. autoclass:: TaxAddresses
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.api
+
+
+CancelTax Response
+------------------
 
 .. autoclass:: CancelTaxResponse
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.base
 
 .. autoclass:: CancelTaxResult
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.api
+
+
+ValidateAddress Response
+------------------------
 
 .. autoclass:: ValidateAddressResponse
     :members:
     :special-members:
+    :undoc-members:
 
 .. currentmodule:: avalara.base
 
 .. autoclass:: Address
     :members:
     :special-members:
-
-.. automethod:: describe_address_type
-.. automethod:: describe_fips_code
-.. automethod:: describe_carrier_route
-.. automethod:: describe_post_net
+    :undoc-members:
 
 
 Exceptions
 ==========
-.. autoclass:: AvalaraException
+.. autoexception:: AvalaraException
     :members:
-    :special-members:
 
-.. autoclass:: AvalaraServerException
+.. autoexception:: AvalaraServerException
     :members:
-    :special-members:
 
-.. autoclass:: AvalaraServerDetailException
+.. autoexception:: AvalaraServerDetailException
     :members:
-    :special-members:

@@ -1,6 +1,7 @@
 from avalara.base import Document, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
+import decorator
 
-
+@decorator.decorator
 def except_500_and_return(fn):
     def newfn(*args, **kwargs):
         try:
@@ -15,7 +16,6 @@ class API(BaseAPI):
     PRODUCTION_HOST = 'rest.avalara.net'
     DEVELOPMENT_HOST = 'development.avalara.net'
     VERSION = '1.0'
-    company_code = None
 
     def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
         self.company_code = company_code
@@ -23,6 +23,7 @@ class API(BaseAPI):
 
     @except_500_and_return
     def get_tax(self, lat, lng, doc):
+        """Performs a HTTP GET to tax/get/"""
         try:
             stem = '/'.join([self.VERSION, 'tax', '%.6f,%.6f' % (lat, lng), 'get'])
         except TypeError:
@@ -33,6 +34,7 @@ class API(BaseAPI):
 
     @except_500_and_return
     def post_tax(self, doc, commit=False):
+        """Performs a HTTP POST to tax/get/"""
         stem = '/'.join([self.VERSION, 'tax', 'get'])
         setattr(doc, 'CompanyCode', self.company_code)
         if commit:
@@ -46,6 +48,7 @@ class API(BaseAPI):
 
     @except_500_and_return
     def cancel_tax(self, doc, reason=None, doc_id=None):
+        """Performs a HTTP POST to tax/cancel/"""
         if reason and (not reason in Document.CANCEL_CODES):
             raise AvalaraException("Please pass a valid cancel code")
         stem = '/'.join([self.VERSION, 'tax', 'cancel'])
@@ -69,6 +72,7 @@ class API(BaseAPI):
 
     @except_500_and_return
     def validate_address(self, address):
+        """Performs a HTTP GET to address/validate/"""
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
         return ValidateAddressResponse(resp)
@@ -89,8 +93,7 @@ class CancelTaxResponse(BaseResponse):
 
     # cancel tax just had to structure this differently didn't they
     @property
-    def details(self):
-        """Return the level of response detail we have"""
+    def _details(self):
         try:
             return [{m.RefersTo: m.Summary} for m in self.CancelTaxResult.Messages]
         except AttributeError:  # doesn't have RefersTo
@@ -98,6 +101,8 @@ class CancelTaxResponse(BaseResponse):
 
     @property
     def is_success(self):
+        """Returns whether or not the response was successful.
+        Avalara bungled this response, it is formatted differently than every other response"""
         try:
             return True if self.CancelTaxResult.ResultCode == BaseResponse.SUCCESS else False
         except AttributeError:
@@ -105,12 +110,17 @@ class CancelTaxResponse(BaseResponse):
 
     @property
     def error(self):
+        """Returns a list of tuples. The first position in the tuple is
+        either the offending field that threw an error, or the class in
+        the Avalara system that threw it. The second position is a
+        human-readable message from Avalara.
+        Avalara bungled this response, it is formatted differently than every other response"""
         cond = False
         try:
             cond = self.CancelTaxResult.ResultCode == BaseResponse.ERROR
         except AttributeError:
             raise AvalaraException('error not applicable for this response')
-        return self.details if cond else False
+        return self._details if cond else False
 
 
 class ValidateAddressResponse(BaseResponse):

@@ -1,9 +1,9 @@
-PyAvalara
+PyAvaTax
 =======
 
-PyAvalara is a python library for easily integrating Avalara’s RESTful Tax API Service. You will need an account with Avalara (They have free trials)
+PyAvaTax is a python library for easily integrating Avalara’s RESTful AvaTax API Service. You will need an account with Avalara (They have free trials)
 
-Avalara expects a JSON (or XML) POST to their tax/get/ URI like this
+AvaTax expects a JSON (or XML) POST to their tax/get/ URI like this
 
     {
         "DocDate": "2012-10-24",

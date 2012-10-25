@@ -1,11 +1,12 @@
 from pyavatax.base import Document, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
-import decorator
+import decorator, logging
 
 @decorator.decorator
 def except_500_and_return(fn, *args, **kwargs):
     try:
         return fn(*args, **kwargs)
     except AvalaraServerException as e:
+        API.logger.error(e.full_request_as_string)
         return ErrorResponse(e.response)
 
 
@@ -14,10 +15,12 @@ class API(BaseAPI):
     PRODUCTION_HOST = 'rest.avalara.net'
     DEVELOPMENT_HOST = 'development.avalara.net'
     VERSION = '1.0'
+    logger = None
 
-    def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
+    def __init__(self, account_number, license_key, company_code, live=False, timeout=None, **kwargs):
         self.company_code = company_code
-        super(API, self).__init__(username=account_number, password=license_key, live=live, **kwargs)
+        API.logger = logging.getLogger('pyavatax')
+        super(API, self).__init__(username=account_number, password=license_key, live=live, timeout=timeout, **kwargs)
 
     @except_500_and_return
     def get_tax(self, lat, lng, doc):
@@ -28,6 +31,7 @@ class API(BaseAPI):
             raise AvalaraException('Please pass lat and long as floats, or Decimal')
         data = {'saleamount': doc.total}
         resp = self._get(stem, data)
+        API.logger.info('"GET" %s%s' % (self.url, stem))
         return GetTaxResponse(resp)
 
     @except_500_and_return
@@ -41,6 +45,7 @@ class API(BaseAPI):
         doc.update(CompanyCode=self.company_code)
         if commit:
             doc.update(Commit=True)
+            API.logger.debug('%s setting Commit=True' % doc.DocCode)
             # need to change doctype if order, to invoice, otherwise commit does nothing
             new_doc_type = {
                 Document.DOC_TYPE_SALE_ORDER: Document.DOC_TYPE_SALE_INVOICE,
@@ -49,12 +54,15 @@ class API(BaseAPI):
                 Document.DOC_TYPE_INVENTORY_ORDER: Document.DOC_TYPE_INVENTORY_INVOICE
             }.get(doc.DocType, None)
             if new_doc_type:
+                API.logger.debug('%s updating DocType from %s to %s' % (doc.DocCode, doc.DocType, new_doc_type))
                 doc.update(DocType=new_doc_type)
         data = doc.todict()
         resp = self._post(stem, data)
         tax_resp = PostTaxResponse(resp)
+        API.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
         if not hasattr(doc, 'DocCode'):
             doc.update_doc_code_from_response(tax_resp)
+            API.logger.debug('AvaTax assigned %s as DocCode' % doc.DocCode)
         return tax_resp
 
     @except_500_and_return
@@ -79,6 +87,7 @@ class API(BaseAPI):
         if _doc_id:
             data.update({'DocId': _doc_id})
         resp = self._post(stem, data)
+        API.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
         return CancelTaxResponse(resp)
 
     @except_500_and_return
@@ -86,6 +95,7 @@ class API(BaseAPI):
         """Performs a HTTP GET to address/validate/"""
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
+        API.logger.info('"GET", %s%s' % (self.url, stem))
         return ValidateAddressResponse(resp)
 
 

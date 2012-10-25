@@ -1,6 +1,5 @@
-import datetime
+import datetime, logging, json
 import requests
-import json
 
 
 def str_to_class(klassname):
@@ -87,7 +86,7 @@ class AvalaraBase(object):
 class BaseAPI(object):
     """Handles HTTP and requests library"""
 
-    headers = {'Content-Type': 'text/json; charset=utf-8'}
+    default_headers = {'Content-Type': 'text/json; charset=utf-8'}
     # useful for testing output with charlesproxy if you're getting a less-than-helpful error respose
     # if you suspect that headers are causing a problem with your requests, use this proxy,
     # the requests library doesn't control all the headers, libraries beneath it create more
@@ -96,18 +95,18 @@ class BaseAPI(object):
     }
     PRODUCTION_HOST = None
     DEVELOPMENT_HOST = None
-    url = None
-    host = None
-    username = None
-    password = None
     protocol = 'https'
+    default_timeout = 10.0
+    logger = None
 
-    def __init__(self, username=None, password=None, live=False, **kwargs):
-        self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST
-        self.url = "%s://%s" % (self.protocol, self.host)
+    def __init__(self, username=None, password=None, live=False, timeout=None, **kwargs):
+        self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST  # from the child API class
+        self.url = "%s://%s" % (BaseAPI.protocol, self.host)
         self.username = username
-        self.headers.update({'Host': self.host})
+        self.headers = BaseAPI.default_headers.update({'Host': self.host})
         self.password = password
+        self.timeout = timeout or BaseAPI.default_timeout
+        BaseAPI.logger = logging.getLogger('pyavatax')
 
     def _get(self, stem, data):
         return self._request('GET', stem, params=data)
@@ -117,18 +116,24 @@ class BaseAPI(object):
 
     def _request(self, http_method, stem, data={}, params={}):
         url = '%s/%s' % (self.url, stem)
-        resp = None
         kwargs = {
             'params': params,
             'data': json.dumps(data),
             'headers': self.headers,
             'auth': (self.username, self.password),
-            'proxies': self.proxies
+            'proxies': BaseAPI.proxies,
+            'timeout': self.timeout
         }
-        if http_method == 'GET':
-            resp = requests.get(url, **kwargs)
-        elif http_method == 'POST':
-            resp = requests.post(url, **kwargs)
+        print url
+        resp = None
+        try:
+            if http_method == 'GET':
+                resp = requests.get(url, **kwargs)
+            elif http_method == 'POST':
+                resp = requests.post(url, **kwargs)
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+            BaseAPI.logger.error(e)
+            raise AvalaraServerNotReachableException(e)
         if resp.status_code == requests.codes.ok:
             if resp.json is None:
                 raise AvalaraServerDetailException(resp)
@@ -201,12 +206,22 @@ class AvalaraBaseException(Exception):
 
 
 class AvalaraException(AvalaraBaseException):
-    """Thrown when operating unsuccessfully with document, address, line, etc objects"""
+    """Raised when operating unsuccessfully with document, address, line, etc objects"""
     pass
 
 
+class AvalaraServerNotReachableException(AvalaraBaseException):
+    """Raised when the AvaTax service is unreachable for any reason and no response is received"""
+    
+    def __init__(self, request_exception, *args, **kwargs):
+        self.request_exception = request_exception
+
+    def __str__(self):
+        return repr(self.request_exception)
+
+
 class AvalaraServerException(AvalaraBaseException):
-    """Used internally to handle 500 error responses"""
+    """Used internally to handle 500 and other server error responses"""
 
     def __init__(self, response, *args, **kwargs):
         self.response = response

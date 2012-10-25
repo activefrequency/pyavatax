@@ -91,7 +91,8 @@ Should you need access to the actual response or request the ``response`` attrib
 
 Since the ``Request`` library sits on top of the urllib you may not get the **exact data/headers being transmitted**. To account for this I have added a ``proxies`` class variable on the BaseAPI class. It is commented out, but set to the default value for CharlesProxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
 
+
 Logging
 -------
 
-TODO
+PyAvaTax uses standard python logging, with a logger called ``pyavatax.api``. All HTTP requests are logged at the ``INFO`` level. All changes that our API makes to your Document objects are logged at the ``DEBUG`` level. All 500 errors, or HTTP Errors (timeouts, unreachable, etc.) are logged to the ``ERROR`` level.

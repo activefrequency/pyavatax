@@ -152,3 +152,6 @@ Exceptions
 
 .. autoexception:: AvalaraServerDetailException
     :members:
+
+.. autoexception:: AvalaraServerNotReachableException
+    :members:

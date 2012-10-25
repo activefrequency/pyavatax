@@ -34,9 +34,18 @@ class API(BaseAPI):
     def post_tax(self, doc, commit=False):
         """Performs a HTTP POST to tax/get/"""
         stem = '/'.join([self.VERSION, 'tax', 'get'])
-        setattr(doc, 'CompanyCode', self.company_code)
+        doc.update(CompanyCode=self.company_code)
         if commit:
-            setattr(doc, 'Commit', True)
+            doc.update(Commit=True)
+            # need to change doctype if order, to invoice, otherwise commit does nothing
+            new_doc_type = {
+                Document.DOC_TYPE_SALE_ORDER: Document.DOC_TYPE_SALE_INVOICE,
+                Document.DOC_TYPE_RETURN_ORDER: Document.DOC_TYPE_RETURN_INVOICE,
+                Document.DOC_TYPE_PURCHASE_ORDER: Document.DOC_TYPE_PURCHASE_INVOICE,
+                Document.DOC_TYPE_INVENTORY_ORDER: Document.DOC_TYPE_INVENTORY_INVOICE
+            }.get(doc.DocType, None)
+            if new_doc_type:
+                doc.update(DocType=new_doc_type)
         data = doc.todict()
         resp = self._post(stem, data)
         tax_resp = PostTaxResponse(resp)

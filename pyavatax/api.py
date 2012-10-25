@@ -62,7 +62,6 @@ class API(BaseAPI):
         API.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
         if not hasattr(doc, 'DocCode'):
             doc.update_doc_code_from_response(tax_resp)
-            API.logger.debug('AvaTax assigned %s as DocCode' % doc.DocCode)
         return tax_resp
 
     @except_500_and_return

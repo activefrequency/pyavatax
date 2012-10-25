@@ -174,6 +174,11 @@ def test_posttax():
     assert tax.DocCode
     assert doc.DocCode  # make sure the doccode moved over
     l.check(
+        ('pyavatax.api', 'DEBUG', 'None setting default from address code'),
+        ('pyavatax.api', 'DEBUG', 'None setting default to address code'),
+        ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
+        ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
+        ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'INFO', '"POST", %s, %s%s' % (None, api.url, '/'.join([API.VERSION, 'tax', 'get']))),
         ('pyavatax.api', 'DEBUG', 'AvaTax assigned %s as DocCode' % doc.DocCode)
     )
@@ -195,6 +200,7 @@ def test_timeout():
         else:
             assert False
     l.check(
+        ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
         ('pyavatax.api', 'ERROR', "HTTPSConnectionPool(host='development.avalara.net', port=443): Request timed out. (timeout=1e-05)")
     )
 

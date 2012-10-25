@@ -201,6 +201,7 @@ class ErrorResponse(BaseResponse):
 
 
 class AvalaraBaseException(Exception):
+    """Common base for all our exceptions"""
     pass
 
 
@@ -271,9 +272,15 @@ class Document(AvalaraBase):
     CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
     CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
 
+    logger = None
+
     __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
     __contains__ = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
     __has__ = ['DetailLevel']
+
+    def __init__(self, *args, **kwargs):
+        super(Document, self).__init__(*args, **kwargs)
+        Document.logger = logging.getLogger('pyavatax.api')
 
     @staticmethod
     def new_sales_order(*args, **kwargs):
@@ -329,6 +336,7 @@ class Document(AvalaraBase):
         if not hasattr(line, 'LineNo'):
             count = len(self.Lines)
             setattr(line, 'LineNo', count + 1)  # start at one
+            Document.logger.debug('%s inserting LineNo %d' % (getattr(self, 'DocCode', None), line.LineNo))
         self.Lines.append(line)
 
     def add_from_address(self, address):
@@ -339,6 +347,7 @@ class Document(AvalaraBase):
             raise AvalaraException('%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
             setattr(address, 'AddressCode', Address.DEFAULT_FROM_ADDRESS_CODE)
+            Document.logger.debug('%s setting default from address code' % getattr(self, 'DocCode', None))
         self.from_address_code = getattr(address, 'AddressCode')
         self.Addresses.append(address)
 
@@ -350,6 +359,7 @@ class Document(AvalaraBase):
             raise AvalaraException('%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
             setattr(address, 'AddressCode', Address.DEFAULT_TO_ADDRESS_CODE)
+            Document.logger.debug('%s setting default to address code' % getattr(self, 'DocCode', None))
         self.to_address_code = getattr(address, 'AddressCode')
         self.Addresses.append(address)
 
@@ -367,10 +377,12 @@ class Document(AvalaraBase):
                 if not hasattr(self, 'from_address_code'):
                     raise AvalaraException('Origin Code needed for Line Item %r' % line.LineNo)
                 line.OriginCode = self.from_address_code
+                Document.logger.debug('%s setting origin code %s' % (getattr(self, 'DocCode', None), line.OriginCode))
             if not hasattr(Line, 'DestinationCode'):
                 if not hasattr(self, 'to_address_code'):
                     raise AvalaraException('DestinationCode needed for Line Item %r' % line.LineNo)
                 line.DestinationCode = self.to_address_code
+                Document.logger.debug('%s setting destination code %s' % (getattr(self, 'DocCode', None), line.DestinationCode))
 
     def validate(self):
         """Ensures we have addresses and line items. Then calls validate_codes"""
@@ -391,6 +403,7 @@ class Document(AvalaraBase):
         if not isinstance(post_tax_response, PostTaxResponse):
             raise AvalaraException('post_tax_response must be a %r' % type(PostTaxResponse))
         setattr(self, 'DocCode', getattr(post_tax_response, 'DocCode'))
+        Document.logger.debug('AvaTax assigned %s as DocCode' % getattr(self, 'DocCode', None))
 
 
 class Line(AvalaraBase):

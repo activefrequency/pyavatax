@@ -1,6 +1,6 @@
 .. _django:
 
-PyAvalara features for Django
+PyAvaTax features for Django
 =============================
 
 TODO

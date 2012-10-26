@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# PyAvalara documentation build configuration file, created by
+# PyAvaTax documentation build configuration file, created by
 # sphinx-quickstart on Wed Oct 24 14:35:06 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -40,7 +40,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'PyAvalara'
+project = u'PyAvaTax'
 copyright = u'2012, John Obelenus, Active Frequency'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PyAvalaradoc'
+htmlhelp_basename = 'PyAvaTaxdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'PyAvalara.tex', u'PyAvalara Documentation',
+  ('index', 'PyAvaTax.tex', u'PyAvaTax Documentation',
    u'John Obelenus, Active Frequency', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pyavalara', u'PyAvalara Documentation',
+    ('index', 'pyavalara', u'PyAvaTax Documentation',
      [u'John Obelenus, Active Frequency'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'PyAvalara', u'PyAvalara Documentation',
-   u'John Obelenus, Active Frequency', 'PyAvalara', 'One line description of project.',
+  ('index', 'PyAvaTax', u'PyAvaTax Documentation',
+   u'John Obelenus, Active Frequency', 'PyAvaTax', 'One line description of project.',
    'Miscellaneous'),
 ]
 

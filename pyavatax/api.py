@@ -18,10 +18,11 @@ class API(BaseAPI):
     VERSION = '1.0'
     logger = None
 
-    def __init__(self, account_number, license_key, company_code, live=False, timeout=None, **kwargs):
+    def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
+        """Constructor for API object. Also takes two optional kwargs: timeout, and proxies"""
         self.company_code = company_code
         API.logger = logging.getLogger('pyavatax.api')
-        super(API, self).__init__(username=account_number, password=license_key, live=live, timeout=timeout, **kwargs)
+        super(API, self).__init__(username=account_number, password=license_key, live=live, **kwargs)
 
     @except_500_and_return
     def get_tax(self, lat, lng, doc, sale_amount=None):

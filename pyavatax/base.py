@@ -108,22 +108,17 @@ class BaseAPI(object):
     """Handles HTTP and requests library"""
 
     default_headers = {'Content-Type': 'text/json; charset=utf-8'}
-    # useful for testing output with charlesproxy if you're getting a less-than-helpful error respose
-    # if you suspect that headers are causing a problem with your requests, use this proxy,
-    # the requests library doesn't control all the headers, libraries beneath it create more
-    proxies = {
-        # 'https': 'localhost:8888'
-    }
     PRODUCTION_HOST = None
     DEVELOPMENT_HOST = None
     protocol = 'https'
     default_timeout = 10.0
     logger = None
 
-    def __init__(self, username=None, password=None, live=False, timeout=None, **kwargs):
+    def __init__(self, username=None, password=None, live=False, timeout=None, proxies={}, **kwargs):
         self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST  # from the child API class
         self.url = "%s://%s" % (BaseAPI.protocol, self.host)
         self.username = username
+        self.proxies = proxies
         self.headers = BaseAPI.default_headers.update({'Host': self.host})
         self.password = password
         self.timeout = timeout or BaseAPI.default_timeout
@@ -142,7 +137,7 @@ class BaseAPI(object):
             'data': json.dumps(data),
             'headers': self.headers,
             'auth': (self.username, self.password),
-            'proxies': BaseAPI.proxies,
+            'proxies': self.proxies,
             'timeout': self.timeout
         }
         resp = None

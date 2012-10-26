@@ -122,7 +122,7 @@ If the response is not successful, the ``error`` attribute is a list of tuples. 
 
 Should you need access to the actual response or request the ``response`` attribute is the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out their documentation.
 
-Since the ``Request`` library sits on top of the urllib you may not get the **exact data/headers being transmitted**. To account for this I have added a ``proxies`` class variable on the BaseAPI class. It is commented out, but set to the default value for CharlesProxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
+Since the ``Request`` library sits on top of the urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup CharlesProxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
 
 
 Logging

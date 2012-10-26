@@ -7,13 +7,13 @@ setup(
     url = 'http://github.com/activefrequency/pyavatax/',
     author = 'John Obelenus',
     author_email = 'jobelenus@activefrequency.com',
-    version='0.2dev',
+    version='0.3dev',
     install_requires = ['requests>=0.14.1', 'decorator>=3.4.0'],
     package_data = {
         '': ['*.txt', '*.rst', '*.md']
     },
     packages=['pyavatax',],
     license='BSD',
-    long_description=open('README.rst').read(),
+    long_description="PyAvaTax is a python library for easily integrating Avalara's RESTful AvaTax API Service",
 )
 

@@ -70,6 +70,8 @@ class AvalaraBase(object):
                         getattr(self, k).append(_v)
                     elif isinstance(_v, dict):
                         getattr(self, k).append(klass(**_v))
+            else:
+                raise AvalaraException('%s is not a valid field' % k)
         self.clean()
 
     def todict(self):
@@ -298,6 +300,10 @@ class Document(AvalaraBase):
         Document.logger = logging.getLogger('pyavatax.api')
 
     @staticmethod
+    def from_data(data):
+        return Document(data)
+
+    @staticmethod
     def new_sales_order(*args, **kwargs):
         kwargs.update({'DocType': Document.DOC_TYPE_SALE_ORDER})
         return Document(*args, **kwargs)
@@ -492,6 +498,10 @@ class Line(AvalaraBase):
             kwargs.update({'Qty': 1})
         return super(Line, self).__init__(*args, **kwargs)
 
+    @staticmethod
+    def from_data(data):
+        return Line(data)
+
     def clean_Qty(self):
         qty = getattr(self, 'Qty', None)
         try:
@@ -529,7 +539,11 @@ class Address(AvalaraBase):
     """Represents an Avalara Address"""
     DEFAULT_FROM_ADDRESS_CODE = "1"
     DEFAULT_TO_ADDRESS_CODE = "2"
-    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'PostalCode', 'Region', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
+    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'PostalCode', 'Region', 'City', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
+
+    @staticmethod
+    def from_data(data):
+        return Address(data)
 
     @property
     def describe_address_type(self):

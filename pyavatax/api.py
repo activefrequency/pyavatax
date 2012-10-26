@@ -1,4 +1,4 @@
-from pyavatax.base import Document, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
+from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
 import decorator, logging
 
 @decorator.decorator
@@ -25,6 +25,10 @@ class API(BaseAPI):
     @except_500_and_return
     def get_tax(self, lat, lng, doc):
         """Performs a HTTP GET to tax/get/"""
+        if isinstance(doc, dict):
+            doc = Document.from_data(doc)
+        elif not isinstance(doc, Document):
+            raise AvalaraException('Please pass a document or a dictionary to create a Document')
         try:
             stem = '/'.join([self.VERSION, 'tax', '%.6f,%.6f' % (lat, lng), 'get'])
         except TypeError:
@@ -41,6 +45,10 @@ class API(BaseAPI):
         the document type to make sure it is capable of being Commited.
         XXXXXOrder is not capable of being commited. We will change it 
         to XXXXXXXInvoice, which is capable of being committed"""
+        if isinstance(doc, dict):
+            doc = Document.from_data(doc)
+        elif not isinstance(doc, Document):
+            raise AvalaraException('Please pass a document or a dictionary to create a Document')
         stem = '/'.join([self.VERSION, 'tax', 'get'])
         doc.update(CompanyCode=self.company_code)
         if commit:
@@ -67,6 +75,10 @@ class API(BaseAPI):
     @except_500_and_return
     def cancel_tax(self, doc, reason=None, doc_id=None):
         """Performs a HTTP POST to tax/cancel/"""
+        if isinstance(doc, dict):
+            doc = Document.from_data(doc)
+        elif not isinstance(doc, Document):
+            raise AvalaraException('Please pass a document or a dictionary to create a Document')
         if reason and (not reason in Document.CANCEL_CODES):
             raise AvalaraException("Please pass a valid cancel code")
         stem = '/'.join([self.VERSION, 'tax', 'cancel'])
@@ -92,6 +104,10 @@ class API(BaseAPI):
     @except_500_and_return
     def validate_address(self, address):
         """Performs a HTTP GET to address/validate/"""
+        if isinstance(address, dict):
+            address = Address.from_data(address)
+        elif not isinstance(address, Address):
+            raise AvalaraException('Please pass an address or a dictionary to create an Address')
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
         API.logger.info('"GET", %s%s' % (self.url, stem))
@@ -99,12 +115,12 @@ class API(BaseAPI):
 
 
 class GetTaxResponse(BaseResponse):
-    __fields__ = ['Rate', 'Tax']
+    __fields__ = ['Rate', 'Tax', 'ResultCode']
     __contains__ = ['TaxDetails']
 
 
 class PostTaxResponse(BaseResponse):
-    __fields__ = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate']
+    __fields__ = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate', 'ResultCode']
     __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddresses']
 
 
@@ -144,4 +160,5 @@ class CancelTaxResponse(BaseResponse):
 
 
 class ValidateAddressResponse(BaseResponse):
+    __fields__ = ['ResultCode']
     __has__ = ['Address']

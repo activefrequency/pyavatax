@@ -11,7 +11,7 @@ def get_api(timeout=None):
 
 
 @pytest.mark.example
-def test_avalara_example():
+def test_avalara_and_http():
     api = get_api()
     data = {
         "DocDate": "2011-05-11",
@@ -43,7 +43,8 @@ def test_avalara_example():
 
 
 @pytest.mark.example
-def test_extended_example():
+@pytest.mark.from_data
+def test_from_data_example():
     api = get_api()
     data = {
         "DocDate": "2012-06-13",
@@ -84,9 +85,8 @@ def test_extended_example():
             },
         ],
     }
-    stem = '/'.join([api.VERSION, 'tax', 'get'])
-    resp = api._post(stem, data)
-    assert resp.status_code == 200
+    tax = api.post_tax(data)
+    assert tax.is_success is True
 
 
 @pytest.mark.get_tax

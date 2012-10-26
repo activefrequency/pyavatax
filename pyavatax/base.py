@@ -52,19 +52,24 @@ class AvalaraBase(object):
             for v in getattr(self, f):
                 v.clean()
 
+    def _handle_pluralize(self, k):
+        _k = 'Address' if k == 'Addresses' else k
+        _k = 'Line' if k == 'Lines' else _k
+        return _k
+
     def update(self, *args, **kwargs):
         """Updates kwargs onto attributes of self"""
         for k, v in kwargs.iteritems():
             if k in self.__fields__:
                 setattr(self, k, v)
             elif k in self.__has__:  # has an object
-                klass = str_to_class(k)
+                klass = str_to_class(self._handle_pluralize(k))
                 if isinstance(v, klass):
                     setattr(self, k, v)
                 elif isinstance(v, dict):
                     setattr(self, k, klass(**v))
             elif k in self.__contains__:  # contains many objects
-                klass = str_to_class(k)
+                klass = str_to_class(self._handle_pluralize(k))
                 for _v in v:
                     if isinstance(_v, klass):
                         getattr(self, k).append(_v)
@@ -301,7 +306,7 @@ class Document(AvalaraBase):
 
     @staticmethod
     def from_data(data):
-        return Document(data)
+        return Document(**data)
 
     @staticmethod
     def new_sales_order(*args, **kwargs):
@@ -369,7 +374,7 @@ class Document(AvalaraBase):
     @staticmethod
     def _clean_date(date):
         if date and not isinstance(date, datetime.date):
-            return datetime.datetime.strptime('YYYY-MM-DD', date)
+            return datetime.datetime.strptime(date, '%Y-%m-%d').date()
         else:
             return date
 
@@ -378,7 +383,7 @@ class Document(AvalaraBase):
         try:
             date = Document._clean_date(doc_date)
             setattr(self, 'DocDate', date)
-        except ValueError:
+        except ValueError as e:
             raise AvalaraException('DocDate should either be a date object, or a string in this date format: YYYY-MM-DD')
 
     def clean_Discount(self):
@@ -453,17 +458,17 @@ class Document(AvalaraBase):
     def validate_codes(self):
         """Look through line items making sure that origin and destination codes are set
             set defaults if they exist, raise exception if we are missing something"""
-        for line in self.Lines:
-            if not hasattr(line, 'OriginCode'):
+        for l in self.Lines:
+            if not hasattr(l, 'OriginCode'):
                 if not hasattr(self, 'from_address_code'):
-                    raise AvalaraException('Origin Code needed for Line Item %r' % line.LineNo)
-                line.OriginCode = self.from_address_code
-                Document.logger.debug('%s setting origin code %s' % (getattr(self, 'DocCode', None), line.OriginCode))
-            if not hasattr(Line, 'DestinationCode'):
+                    raise AvalaraException('Origin Code needed for Line Item %r' % l.LineNo)
+                l.OriginCode = self.from_address_code
+                Document.logger.debug('%s setting origin code %s' % (getattr(self, 'DocCode', None), l.OriginCode))
+            if not hasattr(l, 'DestinationCode'):
                 if not hasattr(self, 'to_address_code'):
-                    raise AvalaraException('DestinationCode needed for Line Item %r' % line.LineNo)
-                line.DestinationCode = self.to_address_code
-                Document.logger.debug('%s setting destination code %s' % (getattr(self, 'DocCode', None), line.DestinationCode))
+                    raise AvalaraException('DestinationCode needed for Line Item %r' % l.LineNo)
+                l.DestinationCode = self.to_address_code
+                Document.logger.debug('%s setting destination code %s' % (getattr(self, 'DocCode', None), l.DestinationCode))
 
     def validate(self):
         """Ensures we have addresses and line items. Then calls validate_codes"""
@@ -500,7 +505,7 @@ class Line(AvalaraBase):
 
     @staticmethod
     def from_data(data):
-        return Line(data)
+        return Line(**data)
 
     def clean_Qty(self):
         qty = getattr(self, 'Qty', None)
@@ -543,7 +548,7 @@ class Address(AvalaraBase):
 
     @staticmethod
     def from_data(data):
-        return Address(data)
+        return Address(**data)
 
     @property
     def describe_address_type(self):

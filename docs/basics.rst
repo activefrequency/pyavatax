@@ -3,7 +3,7 @@
 The Basics
 ==========
 
-You can rely on our integration to validate what information you're providing. We also will handle the simple cases of shipping and line numbers, so you don't have to think about AvaTax's abstractions and data structures.
+You can rely on our integration to validate what information you're providing. We handle the simple case of shipping and line numbers, so you don't have to think about AvaTax's abstractions and data structures.
 
 Of course, for more complicated interactions all the AvaTax flexibility is at your disposal.
 
@@ -26,8 +26,58 @@ Looks like
 Once you have an account with AvaTax their dashboard page contains the account number and license number. You get to choose a meaningful company code.
 
 
-Creating a Document
--------------------
+Creating a Document From Data
+-----------------------------
+Looks like
+::
+    import pyavatax
+    doc = Document.from_data(dictionary_data)
+    
+The ``dictionary_data`` will be validated against the formatting expected by AvaTax. An ``AvalaraException`` will be raised in the cases it does not validate
+
+It doesn't make sense to have stray variables around, so for all the API calls you can pass a dictionary, or an object
+::
+    doc = Document.from_data(dictionary_data)
+    tax = api.post_tax(doc)
+    # this line performs the same operation as the above two
+    tax = api.post_tax(data_dictionary)
+
+Now I should mention the API calls
+
+
+Making an API call
+------------------
+Looks like
+::
+    response = api.validate_address(address)
+    response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
+    # in lieu of making a whole document, you can alternatively pass the amount to be taxed
+    response = api.get_tax(lat=47.627935, lng=-122.51702, None, sale_amount=100.00)
+    response = api.post_tax(doc)
+    response = api.post_tax(doc, commit=True)
+    response = api.cancel_tax(doc)
+
+Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivalent of doing this. 
+::
+    doc.update(Commit=True)
+    api.post_tax(doc)
+
+However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you
+
+You can perform that update logic anywhere and know that ``post_tax`` even without ``commit`` will remain true to the document's state.
+
+As an added convenience the reponse object to ``post_tax`` and ``get_tax`` have a ``total_tax`` property
+::
+    response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
+    response.Tax  # is the attribute AvaTax returns
+    response.total_tax  # maps to Tax
+    response = api.post_tax(doc)
+    response.TotalTax  # is the attribute AvaTax returns, note it is not consistent with the other name
+    response.total_tax  # maps to TotalTax
+
+
+Creating a Document Manually
+----------------------------
 Looks like
 ::
     import pyavatax
@@ -35,13 +85,13 @@ Looks like
     address = pyavatax.Address(**kwargs)
     line_item = pyavatax.Line(**kwargs)
 
-Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the document. Any keys that are not AvaTax fields will be silently ignored. All the keys **do use AvaTax's camel-case notation**.
+Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the document. Any keys that are not AvaTax fields will throw an ``AvalaraException``. All the keys **do use AvaTax's camel-case notation**.
 ::
     doc.add_to_address(address)
     doc.add_from_address(another_address)
     doc.add_line(line_item)
 
-For simple shipping cases you can use the helper functions ``add_to_address`` and ``add_from_address``. These will manually add the AvaTax ``OriginCode`` and ``DestinationCode`` to the corresponding ``AddressCode``. If your shipping scenario isn't simple, we cannot assume what you're doing - so you will have to input that data onto the objects yourself, like so
+For simple shipping cases you can use the helper functions ``add_to_address`` and ``add_from_address``. These will manually add the AvaTax ``OriginCode`` and ``DestinationCode`` to the corresponding ``AddressCode``. If your shipping scenario isn't simple, we cannot assume what you're doing - so you will have to input that data onto the objects yourself. Here is an exagerrated example to make the point as clear as possible
 ::
     address.update(AddressCode=3)
     another_address.update(AddressCode=2)
@@ -55,23 +105,6 @@ For simple shipping cases you can use the helper functions ``add_to_address`` an
     doc.add_line(another_line)
 
 
-Making an API call
-------------------
-Looks like
-::
-    response = api.validate_address(address)
-    response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
-    response = api.post_tax(doc)
-    response = api.post_tax(doc, commit=True)
-
-Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivalent of doing this. 
-::
-    doc.update(Commit=True)
-    api.post_tax(doc)
-
-However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you
-
-You can perform that update logic anywhere and know that ``post_tax`` even without ``commit`` will remain true to the document's state.
 
 Handling a response
 -------------------

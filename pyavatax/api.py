@@ -1,6 +1,7 @@
 from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
 import decorator, logging
 
+
 @decorator.decorator
 def except_500_and_return(fn, *args, **kwargs):
     try:
@@ -23,17 +24,17 @@ class API(BaseAPI):
         super(API, self).__init__(username=account_number, password=license_key, live=live, timeout=timeout, **kwargs)
 
     @except_500_and_return
-    def get_tax(self, lat, lng, doc):
+    def get_tax(self, lat, lng, doc, sale_amount=None):
         """Performs a HTTP GET to tax/get/"""
         if isinstance(doc, dict):
             doc = Document.from_data(doc)
-        elif not isinstance(doc, Document):
+        elif not isinstance(doc, Document) and sale_amount == None:
             raise AvalaraException('Please pass a document or a dictionary to create a Document')
         try:
             stem = '/'.join([self.VERSION, 'tax', '%.6f,%.6f' % (lat, lng), 'get'])
         except TypeError:
             raise AvalaraException('Please pass lat and long as floats, or Decimal')
-        data = {'saleamount': doc.total}
+        data = {'saleamount': sale_amount} if sale_amount else {'saleamount': doc.total}
         resp = self._get(stem, data)
         API.logger.info('"GET" %s%s' % (self.url, stem))
         return GetTaxResponse(resp)
@@ -118,10 +119,18 @@ class GetTaxResponse(BaseResponse):
     __fields__ = ['Rate', 'Tax', 'ResultCode']
     __contains__ = ['TaxDetails']
 
+    @property
+    def total_tax(self):
+        return getattr(self, 'Tax', None)
+
 
 class PostTaxResponse(BaseResponse):
     __fields__ = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate', 'ResultCode']
     __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddresses']
+
+    @property
+    def total_tax(self):
+        return getattr(self, 'TotalTax', None)
 
 
 class CancelTaxResponse(BaseResponse):

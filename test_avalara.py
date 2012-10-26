@@ -101,6 +101,11 @@ def test_gettax():
     tax = api.get_tax(lat, lng, doc)
     assert tax.is_success is True
     assert tax.Tax > 0
+    assert tax.total_tax == tax.Tax
+    tax = api.get_tax(lat, lng, None, sale_amount=10.00)
+    assert tax.is_success is True
+    assert tax.Tax > 0
+    assert tax.total_tax == tax.Tax
 
 
 # when dealing with line items going to different addresses, i.e. a drop-ship situation
@@ -241,6 +246,7 @@ def test_posttax_commit_cancel():
     assert doc.DocType == Document.DOC_TYPE_SALE_INVOICE  # make sure the doc type changes with commit
     assert tax.is_success is True
     assert tax.TotalTax > 0
+    assert tax.total_tax == tax.TotalTax
     assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 1
     assert len(tax.TaxLines[0].TaxDetails) > 0

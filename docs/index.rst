@@ -47,7 +47,15 @@ AvaTax expects a JSON (or XML) POST to their tax/get/ URI like this
         ],
     }
 
-See how it looks with our Library
+The PyAvaTax API object accepts a python dictionary that looks just like the above data. We will parse it, validate it, handle the HTTP layer for you, and return an object to you.
+::
+    api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
+    tax_response = api.post_tax(dictionary_data)
+    print tax_response.TotalTax
+
+That returned object will have all the response data from AvaTax easily accessible by dot-notation.
+
+Or, an integration using the PyAvaTax library can be done by constructing objects
 ::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')

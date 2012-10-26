@@ -4,7 +4,7 @@ PyAvaTax
 PyAvaTax is a python library for easily integrating Avalara’s RESTful AvaTax API Service. You will need an account with Avalara (They have free trials)
 
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI like this
-
+::
     {
         "DocDate": "2012-10-24",
         "CompanyCode": "FooBar",
@@ -38,7 +38,7 @@ AvaTax expects a JSON (or XML) POST to their tax/get/ URI like this
     }
 
 The PyAvaTax API object accepts a python dictionary that looks just like the above data. We will parse it, validate it, handle the HTTP layer for you, and return an object to you.
-
+::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
     tax_response = api.post_tax(dictionary_data)
     print tax_response.TotalTax
@@ -46,8 +46,7 @@ The PyAvaTax API object accepts a python dictionary that looks just like the abo
 That returned object will have all the response data from AvaTax easily accessible by dot-notation.
 
 Or, an integration using the PyAvaTax library can be done by constructing objects
-
-
+::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
     from_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")

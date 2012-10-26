@@ -39,6 +39,19 @@ class AvalaraBase(object):
         for field in self.__contains__:
             setattr(self, field, [])
 
+    def clean(self):
+        """Validate fields"""
+        for f in self.__fields__:
+            clean_fn = 'clean_%s' % f
+            if hasattr(self, clean_fn):
+                getattr(self, clean_fn)()
+        for f in self.__has__:
+            if hasattr(self, f):
+                getattr(self, f).clean()
+        for f in self.__contains__:
+            for v in getattr(self, f):
+                v.clean()
+
     def update(self, *args, **kwargs):
         """Updates kwargs onto attributes of self"""
         for k, v in kwargs.iteritems():
@@ -57,6 +70,7 @@ class AvalaraBase(object):
                         getattr(self, k).append(_v)
                     elif isinstance(_v, dict):
                         getattr(self, k).append(klass(**_v))
+        self.clean()
 
     def todict(self):
         """Returns a dict of attributes on object"""
@@ -266,6 +280,7 @@ class Document(AvalaraBase):
     DOC_TYPE_PURCHASE_INVOICE = 'PurchaseInvoice'
     DOC_TYPE_INVENTORY_ORDER = 'InventoryTransferOrder'
     DOC_TYPE_INVENTORY_INVOICE = 'InventoryTransferInvoice'
+    DOC_TYPES = (DOC_TYPE_SALE_ORDER, DOC_TYPE_SALE_INVOICE, DOC_TYPE_RETURN_ORDER, DOC_TYPE_RETURN_INVOICE, DOC_TYPE_PURCHASE_ORDER, DOC_TYPE_PURCHASE_INVOICE, DOC_TYPE_INVENTORY_ORDER, DOC_TYPE_INVENTORY_INVOICE)
     CANCEL_POST_FAILED = 'PostFailed'
     CANCEL_DOC_DELETED = 'DocDeleted'
     CANCEL_DOC_VOIDED = 'DocVoided'
@@ -321,6 +336,66 @@ class Document(AvalaraBase):
     def new_inventory_invoice(*args, **kwargs):
         kwargs.update({'DocType': Document.DOC_TYPE_INVENTORY_INVOICE})
         return Document(*args, **kwargs)
+
+    def clean_DocType(self):
+        doc_type = getattr(self, 'DocType', None)
+        if doc_type and doc_type not in Document.DOC_TYPES:
+            raise AvalaraException('%s is not a valid DocType' % doc_type)
+
+    @staticmethod
+    def _clean_float(f):
+        if f and not isinstance(f, float):
+            return float(f)
+        elif f is None:
+            return 0
+        else:
+            return f
+
+    @staticmethod
+    def _clean_int(i):
+        if i and not isinstance(i, int):
+            return int(i)
+        elif i is None:
+            return 0
+        else:
+            return i
+
+    @staticmethod
+    def _clean_date(date):
+        if date and not isinstance(date, datetime.date):
+            return datetime.datetime.strptime('YYYY-MM-DD', date)
+        else:
+            return date
+
+    def clean_DocDate(self):
+        doc_date = getattr(self, 'DocDate', None)
+        try:
+            date = Document._clean_date(doc_date)
+            setattr(self, 'DocDate', date)
+        except ValueError:
+            raise AvalaraException('DocDate should either be a date object, or a string in this date format: YYYY-MM-DD')
+
+    def clean_Discount(self):
+        discount = getattr(self, 'Discount', None)
+        try:
+            f = Document._clean_float(discount)
+            setattr(self, 'Discount', f)
+        except ValueError:
+            raise AvalaraException('Discount should either be a float, or string that is parsable into a float')
+
+    def clean_Commit(self):
+        commit = getattr(self, 'Commit', None)
+        if commit is not None:
+            if commit is not True and commit is not False:
+                raise AvalaraException('Commit should either be True, or False')
+
+    def clean_PaymentDate(self):
+        pay_date = getattr(self, 'PaymentDate', None)
+        try:
+            date = Document._clean_date(pay_date)
+            setattr(self, 'PaymentDate', date)
+        except ValueError:
+            raise AvalaraException('PaymentDate should either be a date object, or a string in this date format: YYYY-MM-DD')
 
     def set_detail_level(self, detail_level):
         """Add a DetailLevel instance to this Avalara document"""
@@ -386,6 +461,8 @@ class Document(AvalaraBase):
 
     def validate(self):
         """Ensures we have addresses and line items. Then calls validate_codes"""
+        if not hasattr(self, 'DocType'):
+            raise AvalaraException('You need to set a DocType')
         if len(self.Addresses) == 0:
             raise AvalaraException('You need Addresses')
         if len(self.Lines) == 0:
@@ -395,7 +472,7 @@ class Document(AvalaraBase):
     @property
     def total(self):
         """Helper representing the line items total amount for tax. Used in GetTax call"""
-        return sum([getattr(line, 'Amount') for line in self.Lines])
+        return sum([getattr(line, 'Amount', 0) for line in self.Lines])
 
     def update_doc_code_from_response(self, post_tax_response):
         """Sets the DocCode on the Document based on the response if Document does not have a DocCode"""
@@ -415,12 +492,44 @@ class Line(AvalaraBase):
             kwargs.update({'Qty': 1})
         return super(Line, self).__init__(*args, **kwargs)
 
+    def clean_Qty(self):
+        qty = getattr(self, 'Qty', None)
+        try:
+            i = Document._clean_int(qty)
+            setattr(self, 'Qty', i)
+        except ValueError:
+            raise AvalaraException('Qty should either be a float, or string that is parsable into a float')
+
+    def clean_Amount(self):
+        amount = getattr(self, 'Amount', None)
+        try:
+            f = Document._clean_float(amount)
+            setattr(self, 'Amount', f)
+        except ValueError:
+            raise AvalaraException('Amount should either be a float, or string that is parsable into a float')
+
+    def clean_Discounted(self):
+        discounted = getattr(self, 'Discounted', None)
+        try:
+            f = Document._clean_float(discounted)
+            setattr(self, 'Discounted', f)
+        except ValueError:
+            raise AvalaraException('Discounted should either be a float, or string that is parsable into a float')
+
+    def clean_TaxIncluded(self):
+        tax = getattr(self, 'TaxIncluded', None)
+        try:
+            f = Document._clean_float(tax)
+            setattr(self, 'TaxIncluded', f)
+        except ValueError:
+            raise AvalaraException('TaxIncluded should either be a float, or string that is parsable into a float')
+
 
 class Address(AvalaraBase):
     """Represents an Avalara Address"""
     DEFAULT_FROM_ADDRESS_CODE = "1"
     DEFAULT_TO_ADDRESS_CODE = "2"
-    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'Latitude', 'Longitude', 'PostalCode', 'Region', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
+    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'PostalCode', 'Region', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
 
     @property
     def describe_address_type(self):

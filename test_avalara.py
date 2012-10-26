@@ -108,6 +108,24 @@ def test_gettax():
 # Origin and Destination codes for the addresses and line items
 @pytest.mark.internals
 def test_validation():
+    try:
+        doc = Document(DocDate='foo')  # testing date
+    except AvalaraException:
+        assert True
+    else:
+        assert False
+    try:
+        doc = Line(Qty='foo')  # testing int
+    except AvalaraException:
+        assert True
+    else:
+        assert False
+    try:
+        doc = Line(Amount='foo')  # testing float
+    except AvalaraException:
+        assert True
+    else:
+        assert False
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
     try:
         doc.validate()

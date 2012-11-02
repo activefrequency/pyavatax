@@ -1,5 +1,6 @@
 from pyavatax.base import Document, Line, Address, AvalaraException, AvalaraServerNotReachableException
 from pyavatax.api import API
+from pyavatax.soap import AvaTaxSoapAPI
 import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest
@@ -10,11 +11,15 @@ def get_api(timeout=None):
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False, timeout=timeout)
 
 
+def get_soap_api():
+    return AvaTaxSoapAPI(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, live=False)
+
+
 @pytest.mark.example
 def test_avalara_and_http():
     api = get_api()
     data = {
-        "DocDate": "2011-05-11",
+        "DocDate": "2012-05-11",
         "CustomerCode": "CUST1",
         "CompanyCode": settings_local.AVALARA_COMPANY_CODE,
         "Addresses":
@@ -280,3 +285,25 @@ def test_failure_validate_address():
     assert validate.is_success is False
     assert len(validate.Messages) == 1
     assert len(validate.error) == 1
+
+
+@pytest.mark.override
+def test_override():
+    import uuid
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    api = get_api()
+    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00)
+    doc.add_line(line)
+    tax = api.post_tax(doc)
+    assert tax.total_tax > 0
+    # now the soap part
+    soap_api = get_soap_api()
+    tax_date = datetime.date.today() - datetime.timedelta(days=5)
+    tax = soap_api.tax_override(doc, tax_date=tax_date, tax_amt=0, reason="Tax Date change", override_type='TaxDate')
+    assert tax
+    assert tax.total_tax > 0

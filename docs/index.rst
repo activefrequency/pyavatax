@@ -76,6 +76,7 @@ Contents:
    basics
    api
    django
+   advanced
 
 
 Indices and tables

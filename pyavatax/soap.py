@@ -1,6 +1,8 @@
 import suds
 import socket
+import logging
 from pyavatax.base import AvalaraBase, AvalaraException, AvalaraBaseException
+from pyavatax.django_integration import get_django_recorder
 
 
 class AvaTaxSoapAPI(object):
@@ -9,9 +11,15 @@ class AvaTaxSoapAPI(object):
     dev_url = 'https://development.avalara.net'
     live_url = 'https://avatax.avalara.net'
 
-    def __init__(self, username, password, live=False, *args, **kwargs):
+    def __init__(self, username, password, live=False, logger=None, recorder=None, *args, **kwargs):
         self.username = username
         self.password = password
+        if logger is None:
+            logger = logging.getLogger('pyavatax.api')
+        self.logger = logger
+        if recorder is None:
+            recorder = get_django_recorder()
+        self.recorder = recorder
         wsdl = AvaTaxSoapAPI.live_wsdl if live else AvaTaxSoapAPI.dev_wsdl
         self.url = AvaTaxSoapAPI.live_url if live else AvaTaxSoapAPI.dev_url
         self.client = suds.client.Client(wsdl)
@@ -113,16 +121,23 @@ class AvaTaxSoapAPI(object):
         self.set_soap_defaults(soap_doc)
         soap_doc.TaxOverride = override
         soap_doc.Commit = True  # necessary
-        return TaxOverrideResponse(self.send(self.client.service.GetTax, soap_doc))
+        resp = TaxOverrideResponse(self.send(self.client.service.GetTax, soap_doc, doc))
+        self.logger.info('"POST" TaxOverride - %s' % (doc.DocCode))
+        self.recorder.success(doc)
+        return resp
 
-    def send(self, operation, soap_obj):
+    def send(self, operation, soap_obj, doc):
         try:
             result = operation(soap_obj)
         except suds.WebFault as e:
-            raise AvalaraSoapServerException(e)
+            e = AvalaraSoapServerException(result)
+            self.recorder.failure(doc, e)
+            raise e
         else:
             if (result.ResultCode != 'Success'):
-                raise AvalaraSoapServerException(result)
+                e = AvalaraSoapServerException(result)
+                self.recorder.failure(doc, e)
+                raise e
             else:
                 return result
 

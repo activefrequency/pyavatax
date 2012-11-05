@@ -154,5 +154,9 @@ class TaxOverrideResponse(AvalaraBase):
         self.response = soap_response
 
     @property
+    def is_success(self):
+        return True if self.response.ResultCode == 'Success' else False
+
+    @property
     def total_tax(self):
         return self.response.TotalTax

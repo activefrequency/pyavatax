@@ -129,3 +129,5 @@ Logging
 -------
 
 PyAvaTax uses standard python logging, with a logger called ``pyavatax.api``. All HTTP requests are logged at the ``INFO`` level. All changes that our API makes to your Document objects are logged at the ``DEBUG`` level. All 500 errors, or HTTP Errors (timeouts, unreachable, etc.) are logged to the ``ERROR`` level.
+
+You can pass your own logger to the API by using the ``logger`` keyword-arg to the instantiation of the API object.

@@ -40,6 +40,8 @@ class AvalaraBase(object):
             setattr(self, field, [])
 
     def clean(self):
+        if hasattr(self, '__testing_ignore_validate__'):
+            return  # passthrough for a test
         """Validate fields"""
         for f in self.__fields__:
             clean_fn = 'clean_%s' % f
@@ -81,7 +83,7 @@ class AvalaraBase(object):
 
     def todict(self):
         """Returns a dict of attributes on object"""
-        if hasattr(self, 'validate'):
+        if hasattr(self, 'validate') and not hasattr('self', '__testing_ignore_validate__'):
             self.validate()
         data = {}
         for f in self.__fields__:

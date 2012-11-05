@@ -1,4 +1,5 @@
 from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
+from pyavatax.django_integration import get_django_recorder
 import decorator, logging
 
 
@@ -8,7 +9,12 @@ def except_500_and_return(fn, *args, **kwargs):
         return fn(*args, **kwargs)
     except AvalaraServerException as e:
         API.logger.error(e.full_request_as_string)
-        return ErrorResponse(e.response)
+        resp = ErrorResponse(e.response)
+        for arg in args:
+            if isinstance(arg, Document):
+                API.recorder.failure(arg, resp)
+                break
+        return resp
 
 
 class API(BaseAPI):
@@ -17,6 +23,7 @@ class API(BaseAPI):
     DEVELOPMENT_HOST = 'development.avalara.net'
     VERSION = '1.0'
     logger = None
+    recorder = get_django_recorder()
 
     def __init__(self, account_number, license_key, company_code, live=False, **kwargs):
         """Constructor for API object. Also takes two optional kwargs: timeout, and proxies"""
@@ -38,6 +45,7 @@ class API(BaseAPI):
         data = {'saleamount': sale_amount} if sale_amount else {'saleamount': doc.total}
         resp = self._get(stem, data)
         API.logger.info('"GET" %s%s' % (self.url, stem))
+        API.recorder.success(doc)
         return GetTaxResponse(resp)
 
     @except_500_and_return
@@ -72,6 +80,7 @@ class API(BaseAPI):
         API.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
         if not hasattr(doc, 'DocCode'):
             doc.update_doc_code_from_response(tax_resp)
+        API.recorder.success(doc)
         return tax_resp
 
     @except_500_and_return
@@ -101,6 +110,7 @@ class API(BaseAPI):
             data.update({'DocId': _doc_id})
         resp = self._post(stem, data)
         API.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
+        API.recorder.success(doc)
         return CancelTaxResponse(resp)
 
     @except_500_and_return

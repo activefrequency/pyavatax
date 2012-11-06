@@ -1,7 +1,7 @@
 .. _django:
 
 PyAvaTax features for Django
-=============================
+============================
 
 If you are integrating PyAvaTax into a Django environment you are in luck. In addition to the standard Python logging I have implemented an AvaTaxRecord model in this project. If you put `pyavatax` into your installed apps and run `syncdb`, you'll find a new Admin entry.
 
@@ -21,7 +21,7 @@ Note: if a Document never failed it is never put into either of these lists.
 
 
 Your Own Recorder
-=================
+-----------------
 
 If you want to create your own recorder to perform some special action when a success or failure occurs, the interface looks like this:
 ::

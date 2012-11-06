@@ -1,7 +1,7 @@
 # if you use pip to do installations, these are the dependencies
 
-requests  # for all http connection
-decorator  # to preserve introspection funcsig integrity
+requests>=0.14.1  # for all http connection
+decorator>=3.4.0  # to preserve introspection funcsig integrity
 # tests are run with pytest, fixtures for tests as well
-pytest
-testfixtures
+pytest==2.2.4
+testfixtures==2.3.5

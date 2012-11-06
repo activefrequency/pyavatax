@@ -3,6 +3,7 @@ import logging
 import json
 
 import requests
+from pyavatax.django_integration import get_django_recorder
 
 
 def str_to_class(klassname):
@@ -119,7 +120,7 @@ class BaseAPI(object):
     default_timeout = 10.0
     logger = None
 
-    def __init__(self, username=None, password=None, live=False, timeout=None, proxies={}, **kwargs):
+    def __init__(self, username=None, password=None, live=False, timeout=None, proxies={}, logger=None, recorder=None, **kwargs):
         self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST  # from the child API class
         self.url = "%s://%s" % (BaseAPI.protocol, self.host)
         self.username = username
@@ -127,7 +128,12 @@ class BaseAPI(object):
         self.headers = BaseAPI.default_headers.update({'Host': self.host})
         self.password = password
         self.timeout = timeout or BaseAPI.default_timeout
-        BaseAPI.logger = logging.getLogger('pyavatax.api')
+        if logger is None:
+            logger = logging.getLogger('pyavatax.api')
+        self.logger = logger
+        if recorder is None:
+            recorder = get_django_recorder()
+        self.recorder = recorder
 
     def _get(self, stem, data):
         return self._request('GET', stem, params=data)
@@ -152,7 +158,7 @@ class BaseAPI(object):
             elif http_method == 'POST':
                 resp = requests.post(url, **kwargs)
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
-            BaseAPI.logger.error(e)
+            self.logger.error(e)
             raise AvalaraServerNotReachableException(e)
         if resp.status_code == requests.codes.ok:
             if resp.json is None:
@@ -294,15 +300,16 @@ class Document(AvalaraBase):
     CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
     CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
 
-    logger = None
 
     __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
     __contains__ = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
     __has__ = ['DetailLevel']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, logger=None, *args, **kwargs):
         super(Document, self).__init__(*args, **kwargs)
-        Document.logger = logging.getLogger('pyavatax.api')
+        if logger is None:
+            logger = logging.getLogger('pyavatax.api')
+        Document.logger = logger
 
     @staticmethod
     def from_data(data):

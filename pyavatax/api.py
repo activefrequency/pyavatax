@@ -1,8 +1,5 @@
 import decorator
-import logging
-
 from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
-from pyavatax.django_integration import get_django_recorder
 
 
 @decorator.decorator
@@ -30,13 +27,7 @@ class API(BaseAPI):
     def __init__(self, account_number, license_key, company_code, live=False, logger=None, recorder=None, **kwargs):
         """Constructor for API object. Also takes two optional kwargs: timeout, and proxies"""
         self.company_code = company_code
-        if logger is None:
-            logger = logging.getLogger('pyavatax.api')
-        self.logger = logger
-        if recorder is None:
-            recorder = get_django_recorder()
-        self.recorder = recorder
-        super(API, self).__init__(username=account_number, password=license_key, live=live, **kwargs)
+        super(API, self).__init__(username=account_number, password=license_key, live=live, logger=logger, recorder=recorder, **kwargs)
 
     @except_500_and_return
     def get_tax(self, lat, lng, doc, sale_amount=None):

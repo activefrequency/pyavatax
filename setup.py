@@ -7,7 +7,7 @@ setup(
     url = 'http://github.com/activefrequency/pyavatax/',
     author = 'John Obelenus',
     author_email = 'jobelenus@activefrequency.com',
-    version='0.6dev',
+    version='0.7dev',
     install_requires = ['requests>=0.14.1', 'decorator>=3.4.0'],
     package_data = {
         '': ['*.txt', '*.rst', '*.md']

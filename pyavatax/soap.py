@@ -36,40 +36,21 @@ class AvaTaxSoapAPI(object):
 
     def _get_credentials(self, username, password):
         token = suds.wsse.UsernameToken(username, password)
-        # AvaTax leaves the WSSE Nonce and Created elements as
-        # optional. As explained in XXX, you should include these if at
-        # all possible, to make your connection more secure.
-        # Nonce (optional) is a randomly generated, cryptographic token
-        # used to prevent theft and replay attacks. We recommend sending
-        # it if your SOAP client library supports it.
         token.setnonce()
-        # Created (optional) identifies when the message was created and
-        # prevents replay attacks. We recommend sending it if your SOAP
-        # client library supports it.
         token.setcreated()
         security = suds.wsse.Security()
         security.tokens.append(token)
         return security
 
     def _my_profile(self):
-
-        # First set elements that the adapters set meaningful defaults
-        # for. Essentially, you are rolling your own Python adapter so
-        # make this clear in the Adapter element.
-
-        ADAPTER = 'AvalaraPython,0.1'
-        CLIENT = 'Playtime,0.1'
-
-        # Build the Profile element
-
+        ADAPTER = 'PyAvaTax,0.1'
+        CLIENT = 'PyAvaTaxSoap,0.1'
         profileNameSpace = ('ns1', 'http://avatax.avalara.com/services')
         profile = suds.sax.element.Element('Profile', ns=profileNameSpace)
         profile.append(suds.sax.element.Element('Client', ns=profileNameSpace).setText(CLIENT))
         profile.append(suds.sax.element.Element('Adapter', ns=profileNameSpace).setText(ADAPTER))
-
         hostname = socket.gethostname()
         profile.append(suds.sax.element.Element('Machine', ns=profileNameSpace).setText(hostname))
-
         return profile
 
     def translate_obj_to_soap(self, doc, soap_doc):

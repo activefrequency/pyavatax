@@ -14,6 +14,6 @@ setup(
     },
     packages=['pyavatax',],
     license='BSD',
-    long_description="PyAvaTax is a python library for easily integrating Avalara's RESTful AvaTax API Service",
+    long_description="PyAvaTax is a Python library for easily integrating Avalara's RESTful AvaTax API Service",
 )
 

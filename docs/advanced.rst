@@ -5,9 +5,9 @@ Advanced -- There Be Dragons Here
 
 The AvaTax REST API is not fully functional yet as compared to their SOAP API. They don't have an approved Python interface (what they call a "connector") overlaying the SOAP interface. They have Java, .NET, and PHP interfaces.
 
-The REST API is getting a host of features in 2013. Sadly, I couldn't wait that long. So I had to put together a simple SOAP api layer.
+The REST API is getting a host of features in 2013. In the meanwhile, however, we've put together a simple SOAP API layer.
 
-Similar and simple instantiation
+Similar and simple instantiation:
 ::
     api = AvaTaxSoapAPI(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, live=False)
 
@@ -26,6 +26,6 @@ I've only implemented a TaxOverride call because that is all I needed at the tim
     print tax.total_tax
 
 
-If you have to use the SOAP API you know what you're doing. If you don't know what you're doing you probably don't need to use SOAP.
+If you have to use the SOAP API, you probably know what you're doing. If you don't know what you're doing you probably don't need to use SOAP.
 
 If you need other SOAP features that Avalara hasn't opened up in the REST API feel free to fork, and roll your own. I love pull requests.

@@ -1,6 +1,7 @@
 import suds
 import socket
 import logging
+
 from pyavatax.base import AvalaraBase, AvalaraException, AvalaraBaseException
 from pyavatax.django_integration import get_django_recorder
 

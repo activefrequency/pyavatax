@@ -1,6 +1,8 @@
+import decorator
+import logging
+
 from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
 from pyavatax.django_integration import get_django_recorder
-import decorator, logging
 
 
 @decorator.decorator
@@ -46,7 +48,7 @@ class API(BaseAPI):
         try:
             stem = '/'.join([self.VERSION, 'tax', '%.6f,%.6f' % (lat, lng), 'get'])
         except TypeError:
-            raise AvalaraException('Please pass lat and long as floats, or Decimal')
+            raise AvalaraException('Please pass lat and lng as floats, or Decimal')
         data = {'saleamount': sale_amount} if sale_amount else {'saleamount': doc.total}
         resp = self._get(stem, data)
         self.logger.info('"GET" %s%s' % (self.url, stem))

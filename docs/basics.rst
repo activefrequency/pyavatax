@@ -13,41 +13,39 @@ Installing the Project
 
 ``pip install pyavatax``
 
-If you are using this project via its source files you will find the dependencies of the project in the provided requirements.txt file. We use `py.test` for testing, but you don't need to install that to use the library
+If you are using this project via its source files you will find the dependencies of the project in the provided requirements.txt file. We use `py.test` for testing, but you don't need to install that to use the library.
 
 
 Instantiating the API
 ---------------------
-Looks like
+Looks like:
 ::
     import pyavatax
     api = pyavatax.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
 
-Once you have an account with AvaTax their dashboard page contains the account number and license number. You get to choose a meaningful company code.
+Once you have an account with AvaTax their dashboard page contains the account number and license number. You can choose a meaningful company code.
 
 
 Creating a Document From Data
 -----------------------------
-Looks like
+Looks like:
 ::
     import pyavatax
     doc = Document.from_data(dictionary_data)
     
-The ``dictionary_data`` will be validated against the formatting expected by AvaTax. An ``AvalaraException`` will be raised in the cases it does not validate
+The ``dictionary_data`` will be validated against the formatting expected by AvaTax. An ``AvalaraException`` will be raised in the cases it does not validate.
 
-It doesn't make sense to have stray variables around, so for all the API calls you can pass a dictionary, or an object
+For all the API calls you can pass a dictionary, or an object:
 ::
     doc = Document.from_data(dictionary_data)
     tax = api.post_tax(doc)
     # this line performs the same operation as the above two
     tax = api.post_tax(data_dictionary)
 
-Now I should mention the API calls
-
 
 Making an API call
 ------------------
-Looks like
+Looks like:
 ::
     response = api.validate_address(address)
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
@@ -57,16 +55,16 @@ Looks like
     response = api.post_tax(doc, commit=True)
     response = api.cancel_tax(doc)
 
-Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivalent of doing this. 
+Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivalent of doing this:
 ::
     doc.update(Commit=True)
     api.post_tax(doc)
 
-However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you
+However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you.
 
 You can perform that update logic anywhere and know that ``post_tax`` even without ``commit`` will remain true to the document's state.
 
-As an added convenience the reponse object to ``post_tax`` and ``get_tax`` have a ``total_tax`` property
+As an added convenience the response objects from ``post_tax`` and ``get_tax`` have a ``total_tax`` property:
 ::
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
     response.Tax  # is the attribute AvaTax returns
@@ -78,7 +76,7 @@ As an added convenience the reponse object to ``post_tax`` and ``get_tax`` have 
 
 Creating a Document Manually
 ----------------------------
-Looks like
+Looks like:
 ::
     import pyavatax
     doc = pyavatax.Document(**kwargs)
@@ -91,7 +89,7 @@ Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the doc
     doc.add_from_address(another_address)
     doc.add_line(line_item)
 
-For simple shipping cases you can use the helper functions ``add_to_address`` and ``add_from_address``. These will manually add the AvaTax ``OriginCode`` and ``DestinationCode`` to the corresponding ``AddressCode``. If your shipping scenario isn't simple, we cannot assume what you're doing - so you will have to input that data onto the objects yourself. Here is an exagerrated example to make the point as clear as possible
+For simple shipping cases you can use the helper functions ``add_to_address`` and ``add_from_address``. These will manually add the AvaTax ``OriginCode`` and ``DestinationCode`` to the corresponding ``AddressCode``. If your shipping scenario isn't simple, we cannot assume what you're doing - so you will have to input that data onto the objects yourself. Here is an exaggerated example to make this use case as clear as possible:
 ::
     address.update(AddressCode=3)
     another_address.update(AddressCode=2)
@@ -108,7 +106,7 @@ For simple shipping cases you can use the helper functions ``add_to_address`` an
 
 Handling a response
 -------------------
-Looks like
+Looks like:
 ::
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
     if response.is_success is True:
@@ -116,18 +114,18 @@ Looks like
     else:
         raise ApplicationException(response.error)
 
-The JSON response from AvaTax is automatically parsed onto the response object. In the case of a "GetTax" call the attribute 'Tax' is the total taxable amount for your transaction
+The JSON response from AvaTax is automatically parsed onto the response object. In the case of a "GetTax" call the attribute 'Tax' is the total taxable amount for your transaction.
 
-If the response is not successful, the ``error`` attribute is a list of tuples. The first position is either the offending field (if there is one) or the AvaTax class which threw the error. The second position is a human readable description of the error provided by AvaTax
+If the response is not successful, the ``error`` attribute is a list of tuples. The first item is either the offending field (if there is one) or the AvaTax class which threw the error. The second item is a human readable description of the error provided by AvaTax.
 
-Should you need access to the actual response or request the ``response`` attribute is the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out their documentation.
+Should you need access to the actual response or request, the ``response`` attribute is the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out the AvaTax documentation.
 
-Since the ``Request`` library sits on top of the urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup CharlesProxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
+Since the ``Request`` library sits on top of urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup Charles Proxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
 
 
 Logging
 -------
 
-PyAvaTax uses standard python logging, with a logger called ``pyavatax.api``. All HTTP requests are logged at the ``INFO`` level. All changes that our API makes to your Document objects are logged at the ``DEBUG`` level. All 500 errors, or HTTP Errors (timeouts, unreachable, etc.) are logged to the ``ERROR`` level.
+PyAvaTax uses standard Python logging, with a logger called ``pyavatax.api``. All HTTP requests are logged at the ``INFO`` level. All changes that our API makes to your Document objects are logged at the ``DEBUG`` level. All 500 errors, or HTTP Errors (timeouts, unreachable, etc.) are logged to the ``ERROR`` level.
 
 You can pass your own logger to the API by using the ``logger`` keyword-arg to the instantiation of the API object.

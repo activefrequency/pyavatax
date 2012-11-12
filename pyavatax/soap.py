@@ -112,7 +112,7 @@ class AvaTaxSoapAPI(object):
         try:
             result = operation(soap_obj)
         except suds.WebFault as e:
-            e = AvalaraSoapServerException(result)
+            e = AvalaraSoapServerException(None, e)
             self.recorder.failure(doc, e)
             raise e
         else:
@@ -130,6 +130,8 @@ class AvalaraSoapServerException(AvalaraBaseException):
         super(AvalaraSoapServerException, self).__init__(*args, **kwargs)
         if not isinstance(result, AvalaraBaseException):
             self.response = result
+        else:
+            self.response = None
 
     def is_success(self):
         return False
@@ -139,10 +141,16 @@ class AvalaraSoapServerException(AvalaraBaseException):
         return self.response.Messages
 
     def error(self):
-        return self._details
+        if self.response:
+            return self._details
+        else:
+            super(self, AvalaraSoapServerException).__str__()
 
     def __str__(self):
-        return self._details
+        if self.response:
+            return self._details
+        else:
+            super(self, AvalaraSoapServerException).__str__()
 
 
 class TaxOverrideResponse(AvalaraBase):

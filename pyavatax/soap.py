@@ -1,3 +1,4 @@
+import datetime
 import suds
 import socket
 import logging
@@ -93,7 +94,10 @@ class AvaTaxSoapAPI(object):
         if getattr(doc, 'Commit', False):
             raise AvalaraException('You cannot override an already commited document')
         override = self.client.factory.create('TaxOverride')
-        override.TaxDate = tax_date
+        if isinstance(tax_date, str):
+            override.TaxDate = tax_date
+        elif isinstance(tax_date, datetime.date):
+            override.TaxDate = tax_date.isoformat()
         override.Reason = reason
         override.TaxOverrideType = override_type
         override.TaxAmount = tax_amt
@@ -128,10 +132,9 @@ class AvalaraSoapServerException(AvalaraBaseException):
 
     def __init__(self, result, *args, **kwargs):
         super(AvalaraSoapServerException, self).__init__(*args, **kwargs)
+        self.response = None
         if not isinstance(result, AvalaraBaseException):
             self.response = result
-        else:
-            self.response = None
 
     def is_success(self):
         return False

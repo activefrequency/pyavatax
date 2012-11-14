@@ -530,22 +530,6 @@ class Line(AvalaraBase):
         except ValueError:
             raise AvalaraException('Amount should either be a float, or string that is parsable into a float')
 
-    def clean_Discounted(self):
-        discounted = getattr(self, 'Discounted', None)
-        try:
-            f = Document._clean_float(discounted)
-            setattr(self, 'Discounted', f)
-        except ValueError:
-            raise AvalaraException('Discounted should either be a float, or string that is parsable into a float')
-
-    def clean_TaxIncluded(self):
-        tax = getattr(self, 'TaxIncluded', None)
-        try:
-            f = Document._clean_float(tax)
-            setattr(self, 'TaxIncluded', f)
-        except ValueError:
-            raise AvalaraException('TaxIncluded should either be a float, or string that is parsable into a float')
-
 
 class Address(AvalaraBase):
     """Represents an Avalara Address"""

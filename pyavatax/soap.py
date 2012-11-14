@@ -3,7 +3,7 @@ import suds
 import socket
 import logging
 
-from pyavatax.base import AvalaraBase, AvalaraException, AvalaraBaseException
+from pyavatax.base import AvalaraBase, ErrorResponse, AvalaraException, AvalaraBaseException
 from pyavatax.django_integration import get_django_recorder
 
 
@@ -107,53 +107,55 @@ class AvaTaxSoapAPI(object):
         self.set_soap_defaults(soap_doc)
         soap_doc.TaxOverride = override
         soap_doc.Commit = True  # necessary
-        resp = TaxOverrideResponse(self.send(self.client.service.GetTax, soap_doc, doc))
+        resp = self.send(self.client.service.GetTax, soap_doc, doc)
+        if isinstance(resp, AvalaraSoapErrorResponse):
+            return resp
+        tax = TaxOverrideResponse(resp)
         self.logger.info('"POST" TaxOverride - %s' % (doc.DocCode))
         self.recorder.success(doc)
-        return resp
+        return tax
 
     def send(self, operation, soap_obj, doc):
         try:
             result = operation(soap_obj)
         except suds.WebFault as e:
-            e = AvalaraSoapServerException(None, e)
+            self.logger.error("Data: %r \n Errors: %r" % (repr(soap_obj), repr(e)))
+            e = AvalaraSoapErrorResponse(None, e)
             self.recorder.failure(doc, e)
-            raise e
+            return e
         else:
             if (result.ResultCode != 'Success'):
-                e = AvalaraSoapServerException(result)
+                e = AvalaraSoapErrorResponse(result)
+                self.logger.error(e)
                 self.recorder.failure(doc, e)
-                raise e
+                return e
             else:
                 return result
 
 
-class AvalaraSoapServerException(AvalaraBaseException):
+class AvalaraSoapErrorResponse(ErrorResponse):
 
     def __init__(self, result, *args, **kwargs):
-        super(AvalaraSoapServerException, self).__init__(*args, **kwargs)
         self.response = None
-        if not isinstance(result, AvalaraBaseException):
+        self.error = None
+        if isinstance(result, AvalaraBaseException):
             self.response = result
+        else:
+            self.error = args[0]
 
+    @property
     def is_success(self):
         return False
 
     @property
     def _details(self):
-        return self.response.Messages
+        return self.response.Messages if self.response else self.error
 
     def error(self):
-        if self.response:
-            return self._details
-        else:
-            super(self, AvalaraSoapServerException).__str__()
+        return self._details
 
     def __str__(self):
-        if self.response:
-            return self._details
-        else:
-            super(self, AvalaraSoapServerException).__str__()
+        return self._details
 
 
 class TaxOverrideResponse(AvalaraBase):

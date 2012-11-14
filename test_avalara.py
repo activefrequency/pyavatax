@@ -310,6 +310,32 @@ def test_override():
     assert tax.total_tax > 0
 
 
+@pytest.mark.override
+@pytest.mark.recorder
+@pytest.mark.failure_case
+def test_override_failure():
+    try:
+        from pyavatax.models import AvaTaxRecord
+    except ImportError:  # no django
+        raise Exception('This can only be run inside a django environment')
+    import uuid
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00)
+    doc.add_line(line)
+    doc.DocType = 'FooBar'  # forcing error
+    soap_api = get_soap_api()
+    tax_date = datetime.date.today() - datetime.timedelta(days=5)
+    tax = soap_api.tax_override(doc, tax_date=tax_date, tax_amt=0, reason="Tax Date change", override_type='TaxDate')
+    assert tax.is_success == False
+    assert 1 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
+    assert 0 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()
+
+
 @pytest.mark.failure_case
 @pytest.mark.recorder
 # this gets run from inside a django environment
@@ -336,7 +362,11 @@ def test_recorder():
     assert 1 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
     assert 0 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()
     doc.DocType = orig_doc_type
-    tax = api.post_tax(doc)
+    tax = api.post_tax(doc, commit=True)
     assert tax.is_success == True
     assert 0 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
+    assert 1 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()
+    tax = api.post_tax(doc, commit=True)
+    assert tax.is_success == False
+    assert 1 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
     assert 1 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()

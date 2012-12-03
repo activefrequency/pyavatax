@@ -125,8 +125,8 @@ class API(BaseAPI):
 
 
 class GetTaxResponse(BaseResponse):
-    __fields__ = ['Rate', 'Tax', 'ResultCode']
-    __contains__ = ['TaxDetails']
+    _fields = ['Rate', 'Tax', 'ResultCode']
+    _contains = ['TaxDetails']
 
     @property
     def total_tax(self):
@@ -134,8 +134,8 @@ class GetTaxResponse(BaseResponse):
 
 
 class PostTaxResponse(BaseResponse):
-    __fields__ = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate', 'ResultCode']
-    __contains__ = ['TaxLines', 'TaxDetails', 'TaxAddresses']
+    _fields = ['DocCode', 'DocId', 'DocDate', 'Timestamp', 'TotalAmount', 'TotalDiscount', 'TotalExemption', 'TotalTaxable', 'TotalTax', 'TotalTaxCalculated', 'TaxDate', 'ResultCode']
+    _contains = ['TaxLines', 'TaxDetails', 'TaxAddresses']
 
     @property
     def total_tax(self):
@@ -143,7 +143,7 @@ class PostTaxResponse(BaseResponse):
 
 
 class CancelTaxResponse(BaseResponse):
-    __has__ = ['CancelTaxResult']
+    _has = ['CancelTaxResult']
 
     # cancel tax just had to structure this differently didn't they
     @property
@@ -178,5 +178,5 @@ class CancelTaxResponse(BaseResponse):
 
 
 class ValidateAddressResponse(BaseResponse):
-    __fields__ = ['ResultCode']
-    __has__ = ['Address']
+    _fields = ['ResultCode']
+    _has = ['Address']

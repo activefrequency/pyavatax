@@ -30,31 +30,31 @@ def isiterable(foo):
 
 class AvalaraBase(object):
     """Base object for parsing and outputting json"""
-    __fields__ = []  # a list of simple attributes on this object
-    __contains__ = []  # a list of other objects contained by this object
-    __has__ = []  # a list of single objects contained by this object
+    _fields = []  # a list of simple attributes on this object
+    _contains = []  # a list of other objects contained by this object
+    _has = []  # a list of single objects contained by this object
 
     def __init__(self, *args, **kwargs):
-        self.__setup__()
+        self._setup()
         self.update(**kwargs)
 
-    def __setup__(self):
+    def _setup(self):
         """Initiate lists for objects contained within this object"""
-        for field in self.__contains__:
+        for field in self._contains:
             setattr(self, field, [])
 
     def clean(self):
-        if hasattr(self, '__testing_ignore_validate__'):
+        if hasattr(self, '_testing_ignore_validate'):
             return  # passthrough for a test
         """Validate fields"""
-        for f in self.__fields__:
+        for f in self._fields:
             clean_fn = 'clean_%s' % f
             if hasattr(self, clean_fn):
                 getattr(self, clean_fn)()
-        for f in self.__has__:
+        for f in self._has:
             if hasattr(self, f):
                 getattr(self, f).clean()
-        for f in self.__contains__:
+        for f in self._contains:
             for v in getattr(self, f):
                 v.clean()
 
@@ -66,15 +66,15 @@ class AvalaraBase(object):
     def update(self, *args, **kwargs):
         """Updates kwargs onto attributes of self"""
         for k, v in kwargs.iteritems():
-            if k in self.__fields__:
+            if k in self._fields:
                 setattr(self, k, v)
-            elif k in self.__has__:  # has an object
+            elif k in self._has:  # has an object
                 klass = str_to_class(self._handle_pluralize(k))
                 if isinstance(v, klass):
                     setattr(self, k, v)
                 elif isinstance(v, dict):
                     setattr(self, k, klass(**v))
-            elif k in self.__contains__:  # contains many objects
+            elif k in self._contains:  # contains many objects
                 klass = str_to_class(self._handle_pluralize(k))
                 for _v in v:
                     if isinstance(_v, klass):
@@ -87,20 +87,20 @@ class AvalaraBase(object):
 
     def todict(self):
         """Returns a dict of attributes on object"""
-        if hasattr(self, 'validate') and not hasattr('self', '__testing_ignore_validate__'):
+        if hasattr(self, 'validate') and not hasattr('self', '_testing_ignore_validate'):
             self.validate()
         data = {}
-        for f in self.__fields__:
+        for f in self._fields:
             if hasattr(self, f):
                 v = getattr(self, f)
                 if isinstance(v, datetime.date) or isinstance(v, datetime.datetime):
                     v = v.isoformat()
                 data[f] = v
-        for f in self.__has__:
+        for f in self._has:
             if hasattr(self, f):
                 obj = getattr(self, f)
                 data[f] = obj.todict()
-        for f in self.__contains__:
+        for f in self._contains:
             if isiterable(getattr(self, f)):
                 data[f] = []
                 for obj in getattr(self, f):
@@ -172,8 +172,8 @@ class BaseResponse(AvalaraBase):
     """Common functionality for handling Avalara server responses"""
     SUCCESS = 'Success'
     ERROR = 'Error'
-    __fields__ = ['ResultCode']
-    __contains__ = ['Messages']
+    _fields = ['ResultCode']
+    _contains = ['Messages']
 
     def __init__(self, response, *args, **kwargs):
         self.response = response
@@ -210,8 +210,8 @@ class BaseResponse(AvalaraBase):
 
 class ErrorResponse(BaseResponse):
     """Common error case functionality from a 500 error"""
-    __fields__ = ['ResultCode']
-    __contains__ = ['Messages']
+    _fields = ['ResultCode']
+    _contains = ['Messages']
 
     @property
     def is_success(self):
@@ -301,9 +301,9 @@ class Document(AvalaraBase):
     CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
 
 
-    __fields__ = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
-    __contains__ = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
-    __has__ = ['DetailLevel']
+    _fields = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
+    _contains = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
+    _has = ['DetailLevel']
 
     def __init__(self, logger=None, *args, **kwargs):
         super(Document, self).__init__(*args, **kwargs)
@@ -503,7 +503,7 @@ class Document(AvalaraBase):
 
 class Line(AvalaraBase):
     """Represents an Avalara Line"""
-    __fields__ = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
+    _fields = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
 
     def __init__(self, *args, **kwargs):
         if 'Qty' not in kwargs:
@@ -530,12 +530,17 @@ class Line(AvalaraBase):
         except ValueError:
             raise AvalaraException('Amount should either be a float, or string that is parsable into a float')
 
+    def clean_ItemCode(self):
+        code = getattr(self, 'ItemCode', None)
+        if code and len(code) > 50:
+            raise AvalaraException('ItemCode cannot be longer than 50 characters')
+
 
 class Address(AvalaraBase):
     """Represents an Avalara Address"""
     DEFAULT_FROM_ADDRESS_CODE = "1"
     DEFAULT_TO_ADDRESS_CODE = "2"
-    __fields__ = ['AddressCode', 'Line1', 'Line2', 'Line3', 'PostalCode', 'Region', 'City', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
+    _fields = ['AddressCode', 'Line1', 'Line2', 'Line3', 'PostalCode', 'Region', 'City', 'TaxRegionId', 'Country', 'AddressType', 'County', 'FipsCode', 'CarrierRoute', 'TaxRegionId', 'PostNet']
 
     @staticmethod
     def from_data(data):
@@ -601,32 +606,32 @@ class Address(AvalaraBase):
 
 class Messages(AvalaraBase):
     """Represents error messages dictionary response from Avalara"""
-    __fields__ = ['Summary', 'RefersTo', 'Source', 'Details', 'Severity']
+    _fields = ['Summary', 'RefersTo', 'Source', 'Details', 'Severity']
 
 
 class DetailLevel(AvalaraBase):
     """Represents Avalara Detail Level request"""
-    __fields__ = ['Line', 'Summary', 'Document', 'Tax', 'Diagnostic']
+    _fields = ['Line', 'Summary', 'Document', 'Tax', 'Diagnostic']
 
 
 class TaxAddresses(AvalaraBase):
     """Represents TaxAddress response from Avalara"""
-    __fields__ = ['Address', 'AddressCode', 'Latitude', 'Longitude', 'City', 'Country', 'PostalCode', 'Region', 'TaxRegionId', 'JurisCode']
-    __contains__ = ['TaxDetails']
+    _fields = ['Address', 'AddressCode', 'Latitude', 'Longitude', 'City', 'Country', 'PostalCode', 'Region', 'TaxRegionId', 'JurisCode']
+    _contains = ['TaxDetails']
 
 
 class TaxDetails(AvalaraBase):
     """Represents TaxDetails response from Avalara"""
-    __fields__ = ['Country', 'Region', 'JurisType', 'Taxable', 'Rate', 'Tax', 'JurisName', 'TaxName']
+    _fields = ['Country', 'Region', 'JurisType', 'Taxable', 'Rate', 'Tax', 'JurisName', 'TaxName']
 
 
 class TaxLines(AvalaraBase):
     """Represents TaxLines response from Avalara"""
-    __fields__ = ['LineNo', 'TaxCode', 'Taxability', 'Taxable', 'Rate', 'Tax', 'Discount', 'TaxCalculated', 'Exemption']
-    __contains__ = ['TaxDetails']
+    _fields = ['LineNo', 'TaxCode', 'Taxability', 'Taxable', 'Rate', 'Tax', 'Discount', 'TaxCalculated', 'Exemption']
+    _contains = ['TaxDetails']
 
 
 class CancelTaxResult(AvalaraBase):
     """Represents CancelTaxResult response from Avalara"""
-    __fields__ = ['DocId', 'TransactionId', 'ResultCode']
-    __contains__ = ['Messages']
+    _fields = ['DocId', 'TransactionId', 'ResultCode']
+    _contains = ['Messages']

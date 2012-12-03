@@ -56,14 +56,14 @@ class AvaTaxSoapAPI(object):
 
     def translate_obj_to_soap(self, doc, soap_doc):
         doc.validate()
-        for f in doc.__fields__:
+        for f in doc._fields:
             if hasattr(doc, f):
                 setattr(soap_doc, f, getattr(doc, f))
         _addy = []
         for a in doc.Addresses:
             addy = self.client.factory.create('BaseAddress')
             addy.TaxRegionId = 0  # a soap default
-            for f in a.__fields__:
+            for f in a._fields:
                 if hasattr(a, f):
                     setattr(addy, f, getattr(a, f))
             _addy.append(addy)
@@ -73,7 +73,7 @@ class AvaTaxSoapAPI(object):
         _line = []
         for l in doc.Lines:
             line = self.client.factory.create('Line')
-            for f in l.__fields__:
+            for f in l._fields:
                 if hasattr(l, f):
                     _f = 'No' if f == 'LineNo' else f  # hack :/
                     setattr(line, _f, getattr(l, f))

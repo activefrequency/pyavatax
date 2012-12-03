@@ -13,6 +13,8 @@ What is PyAvaTax?
 
 PyAvaTax is a Python library for easily integrating Avalara's RESTful AvaTax API Service. You will need an account with Avalara (www.avalara.com).
 
+PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out!
+
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
 ::
     {

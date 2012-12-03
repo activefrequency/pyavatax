@@ -125,13 +125,19 @@ def test_validation():
     else:
         assert False
     try:
-        doc = Line(Qty='foo')  # testing int
+        line = Line(Qty='foo')  # testing int
     except AvalaraException:
         assert True
     else:
         assert False
     try:
-        doc = Line(Amount='foo')  # testing float
+        line = Line(Amount='foo')  # testing float
+    except AvalaraException:
+        assert True
+    else:
+        assert False
+    try:
+        line = Line(ItemCode='this string is longer than fifty characters and should be stopped')  # testing length
     except AvalaraException:
         assert True
     else:
@@ -354,7 +360,7 @@ def test_recorder():
     doc.add_to_address(to_address)
     line = Line(Amount=10.00)
     doc.add_line(line)
-    setattr(doc, '__testing_ignore_validate__', True)  # passthrough I put in to allow this test, never actually use this
+    setattr(doc, '_testing_ignore_validate', True)  # passthrough I put in to allow this test, never actually use this
     orig_doc_type = doc.DocType
     doc.DocType = 'DoesntExist'  # forcing error
     tax = api.post_tax(doc)

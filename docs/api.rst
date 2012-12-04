@@ -24,7 +24,7 @@ Avalara Document
 
 .. autoclass:: Document
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 Document static factory methods
@@ -38,7 +38,7 @@ Avalara Line
 
 .. autoclass:: Line
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 Avalara Address
@@ -46,7 +46,7 @@ Avalara Address
 
 .. autoclass:: Address
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 
@@ -67,14 +67,14 @@ GetTax Response
 
 .. autoclass:: GetTaxResponse
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.base
 
 .. autoclass:: TaxDetails
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.api
@@ -85,24 +85,24 @@ PostTax Response
 
 .. autoclass:: PostTaxResponse
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.base
 
 .. autoclass:: TaxLines
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. autoclass:: TaxDetails
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. autoclass:: TaxAddresses
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.api
@@ -113,14 +113,14 @@ CancelTax Response
 
 .. autoclass:: CancelTaxResponse
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.base
 
 .. autoclass:: CancelTaxResult
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.api
@@ -131,20 +131,26 @@ ValidateAddress Response
 
 .. autoclass:: ValidateAddressResponse
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 .. currentmodule:: pyavatax.base
 
 .. autoclass:: Address
     :members:
-    :special-members:
+    :private-members:
     :undoc-members:
 
 
 Exceptions
 ==========
 .. autoexception:: AvalaraException
+    :members:
+
+.. autoexception:: AvalaraTypeException
+    :members:
+
+.. autoexception:: AvalaraValidationException
     :members:
 
 .. autoexception:: AvalaraServerException

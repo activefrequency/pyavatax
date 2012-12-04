@@ -37,7 +37,7 @@ If you need other SOAP features that Avalara hasn't opened up in the REST API fe
 Running the Tests
 -----------------
 
-If you're working with the source code and want to run our tests, as stated previously, we are using pytest. I've written a test specifically for the Django features. If you're not running in a django environment just be prepared that one test will fail gracefully, and that is expected.
+If you're working with the source code and want to run our tests, as stated previously, we are using pytest. I've written tests specifically for the Django features. If you're not running in a django environment just be prepared those tests will fail gracefully, and that is expected.
 
 If you have a Django environment you can run ``manage.py shell`` locally and then this:
 ::

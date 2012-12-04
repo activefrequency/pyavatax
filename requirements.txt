@@ -3,6 +3,7 @@
 requests>=0.14.1  # for all http connection
 decorator>=3.4.0  # to preserve introspection funcsig integrity
 suds==0.4
-# tests are run with pytest, fixtures for tests as well
+# tests are run with pytest, fixtures for tests as well, Sphinx for documentation
 pytest==2.2.4
 testfixtures==2.3.5
+Sphinx==1.1.3

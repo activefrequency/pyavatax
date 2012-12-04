@@ -1,5 +1,5 @@
 import decorator
-from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraServerException, ErrorResponse
+from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerException, ErrorResponse
 
 
 @decorator.decorator
@@ -32,14 +32,17 @@ class API(BaseAPI):
     @except_500_and_return
     def get_tax(self, lat, lng, doc, sale_amount=None):
         """Performs a HTTP GET to tax/get/"""
-        if isinstance(doc, dict):
-            doc = Document.from_data(doc)
-        elif not isinstance(doc, Document) and sale_amount == None:
-            raise AvalaraException('Please pass a document or a dictionary to create a Document')
+        if doc is not None:
+            if isinstance(doc, dict):
+                doc = Document.from_data(doc)
+            elif not isinstance(doc, Document) and sale_amount == None:
+                raise AvalaraTypeException('Please pass a document or a dictionary to create a Document')
+        elif sale_amount is None:
+            raise AvalaraException('Please pass a doc argument, or sale_amount kwarg')
         try:
             stem = '/'.join([self.VERSION, 'tax', '%.6f,%.6f' % (lat, lng), 'get'])
         except TypeError:
-            raise AvalaraException('Please pass lat and lng as floats, or Decimal')
+            raise AvalaraTypeException('Please pass lat and lng as floats, or Decimal')
         data = {'saleamount': sale_amount} if sale_amount else {'saleamount': doc.total}
         resp = self._get(stem, data)
         self.logger.info('"GET" %s%s' % (self.url, stem))
@@ -56,7 +59,7 @@ class API(BaseAPI):
         if isinstance(doc, dict):
             doc = Document.from_data(doc)
         elif not isinstance(doc, Document):
-            raise AvalaraException('Please pass a document or a dictionary to create a Document')
+            raise AvalaraTypeException('Please pass a document or a dictionary to create a Document')
         stem = '/'.join([self.VERSION, 'tax', 'get'])
         doc.update(CompanyCode=self.company_code)
         if commit:
@@ -87,9 +90,9 @@ class API(BaseAPI):
         if isinstance(doc, dict):
             doc = Document.from_data(doc)
         elif not isinstance(doc, Document):
-            raise AvalaraException('Please pass a document or a dictionary to create a Document')
+            raise AvalaraTypeException('Please pass a document or a dictionary to create a Document')
         if reason and (not reason in Document.CANCEL_CODES):
-            raise AvalaraException("Please pass a valid cancel code")
+            raise AvalaraValidationException("Please pass a valid cancel code")
         stem = '/'.join([self.VERSION, 'tax', 'cancel'])
         data = {
             'CompanyCode': doc.CompanyCode,
@@ -117,7 +120,7 @@ class API(BaseAPI):
         if isinstance(address, dict):
             address = Address.from_data(address)
         elif not isinstance(address, Address):
-            raise AvalaraException('Please pass an address or a dictionary to create an Address')
+            raise AvalaraTypeException('Please pass an address or a dictionary to create an Address')
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
         self.logger.info('"GET", %s%s' % (self.url, stem))

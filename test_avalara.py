@@ -118,65 +118,30 @@ def test_gettax():
 # Origin and Destination codes for the addresses and line items
 @pytest.mark.internals
 def test_validation():
-    try:
+    with pytest.raises(AvalaraException):
         doc = Document(DocDate='foo')  # testing date
-    except AvalaraException:
-        assert True
-    else:
-        assert False
-    try:
+    with pytest.raises(AvalaraException):
         line = Line(Qty='foo')  # testing int
-    except AvalaraException:
-        assert True
-    else:
-        assert False
-    try:
+    with pytest.raises(AvalaraException):
         line = Line(Amount='foo')  # testing float
-    except AvalaraException:
-        assert True
-    else:
-        assert False
-    try:
+    with pytest.raises(AvalaraException):
         line = Line(ItemCode='this string is longer than fifty characters and should be stopped')  # testing length
-    except AvalaraException:
-        assert True
-    else:
-        assert False
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
-    try:
+    with pytest.raises(AvalaraException):
         doc.validate()
-    except AvalaraException:
-        assert True
-    else:
-        assert False
     from_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     doc.add_from_address(from_address)
     doc.add_to_address(to_address)
-    try:
+    with pytest.raises(AvalaraException):
         doc.validate()
-    except AvalaraException:
-        assert True
-    else:
-        assert False
-    try:
+    with pytest.raises(AvalaraException):
         doc.add_from_address(from_address)
-    except AvalaraException:
-        assert True
-    else:
-        assert False
-    try:
+    with pytest.raises(AvalaraException):
         doc.add_to_address(from_address)
-    except AvalaraException:
-        assert True
-    else:
-        assert False
     line = Line(Amount=10.00)
     doc.add_line(line)
-    try:
-        doc.validate()
-    except AvalaraException:
-        assert False
+    doc.validate()
 
 
 @pytest.mark.post_tax

@@ -1,4 +1,4 @@
-from pyavatax.base import Document, Line, Address, AvalaraException, AvalaraServerNotReachableException
+from pyavatax.base import Document, Line, Address, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerNotReachableException
 from pyavatax.api import API
 from pyavatax.soap import AvaTaxSoapAPI
 import settings_local  # put the below settings into this file, it is in .gitignore
@@ -118,30 +118,47 @@ def test_gettax():
 # Origin and Destination codes for the addresses and line items
 @pytest.mark.internals
 def test_validation():
-    with pytest.raises(AvalaraException):
+    with pytest.raises(AvalaraValidationException) as e:
         doc = Document(DocDate='foo')  # testing date
-    with pytest.raises(AvalaraException):
+    assert e.value.code == AvalaraException.CODE_BAD_DATE
+    with pytest.raises(AvalaraValidationException) as e:
         line = Line(Qty='foo')  # testing int
-    with pytest.raises(AvalaraException):
+    assert e.value.code == AvalaraException.CODE_BAD_FLOAT
+    with pytest.raises(AvalaraValidationException) as e:
         line = Line(Amount='foo')  # testing float
-    with pytest.raises(AvalaraException):
+    assert e.value.code == AvalaraException.CODE_BAD_FLOAT
+    with pytest.raises(AvalaraValidationException) as e:
         line = Line(ItemCode='this string is longer than fifty characters and should be stopped')  # testing length
+    assert e.value.code == AvalaraException.CODE_TOO_LONG
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
-    with pytest.raises(AvalaraException):
+    with pytest.raises(AvalaraValidationException) as e:
         doc.validate()
+    assert e.value.code == AvalaraException.CODE_BAD_ADDRESS
     from_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     doc.add_from_address(from_address)
     doc.add_to_address(to_address)
-    with pytest.raises(AvalaraException):
+    with pytest.raises(AvalaraValidationException) as e:
         doc.validate()
-    with pytest.raises(AvalaraException):
+    assert e.value.code == AvalaraException.CODE_BAD_LINE
+    with pytest.raises(AvalaraException) as e:
         doc.add_from_address(from_address)
-    with pytest.raises(AvalaraException):
+    assert e.value.code == AvalaraException.CODE_HAS_FROM
+    with pytest.raises(AvalaraException) as e:
         doc.add_to_address(from_address)
+    assert e.value.code == AvalaraException.CODE_HAS_TO
     line = Line(Amount=10.00)
     doc.add_line(line)
     doc.validate()
+    api = get_api()
+    lat = 47.627935
+    lng = -122.51702
+    with pytest.raises(AvalaraTypeException) as e:
+        api.get_tax(lat, lng, 'foo', None)
+    assert e.value.code == AvalaraException.CODE_BAD_DOC
+    with pytest.raises(AvalaraException) as e:
+        api.get_tax(lat, lng, None, None)
+    assert e.value.code == AvalaraException.CODE_BAD_ARGS
 
 
 @pytest.mark.post_tax

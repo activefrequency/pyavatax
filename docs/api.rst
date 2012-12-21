@@ -146,6 +146,7 @@ Exceptions
 ==========
 .. autoexception:: AvalaraException
     :members:
+    :undoc-members:
 
 .. autoexception:: AvalaraTypeException
     :members:

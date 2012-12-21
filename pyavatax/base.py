@@ -82,7 +82,7 @@ class AvalaraBase(object):
                     elif isinstance(_v, dict):
                         getattr(self, k).append(klass(**_v))
             else:
-                raise AvalaraException('%s is not a valid field' % k)
+                raise AvalaraException(AvalaraException.CODE_INVALID_FIELD, '%s is not a valid field' % k)
         self.clean()
 
     def todict(self):
@@ -234,7 +234,28 @@ class AvalaraBaseException(Exception):
 
 class AvalaraException(AvalaraBaseException):
     """Raised when operating unsuccessfully with document, address, line, etc objects"""
-    pass
+    CODE_BAD_ARGS = 100
+    CODE_BAD_DOC = 101
+    CODE_BAD_LATLNG = 102
+    CODE_BAD_CANCEL = 103
+    CODE_HAS_FROM = 104
+    CODE_HAS_TO = 105
+    CODE_BAD_ADDRESS = 201
+    CODE_BAD_DETAIL = 202
+    CODE_BAD_LINE = 203
+    CODE_INVALID_FIELD = 301
+    CODE_BAD_DOCTYPE = 302
+    CODE_BAD_DATE = 303
+    CODE_BAD_FLOAT = 304
+    CODE_BAD_BOOL = 305
+    CODE_BAD_ORIGIN = 306
+    CODE_BAD_DEST = 307
+    CODE_TOO_LONG = 308
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 1 and isinstance(args[0], int):
+            self.code = args[0]
+        super(AvalaraException, self).__init__(*args, **kwargs)
 
 
 class AvalaraTypeException(AvalaraException):
@@ -368,7 +389,7 @@ class Document(AvalaraBase):
     def clean_DocType(self):
         doc_type = getattr(self, 'DocType', None)
         if doc_type and doc_type not in Document.DOC_TYPES:
-            raise AvalaraValidationException('%s is not a valid DocType' % doc_type)
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_DOCTYPE, '%s is not a valid DocType' % doc_type)
 
     @staticmethod
     def _clean_float(f):
@@ -400,8 +421,8 @@ class Document(AvalaraBase):
         try:
             date = Document._clean_date(doc_date)
             setattr(self, 'DocDate', date)
-        except ValueError as e:
-            raise AvalaraValidationException('DocDate should either be a date object, or a string in this date format: YYYY-MM-DD')
+        except ValueError:
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_DATE, 'DocDate should either be a date object, or a string in this date format: YYYY-MM-DD')
 
     def clean_Discount(self):
         discount = getattr(self, 'Discount', None)
@@ -409,13 +430,13 @@ class Document(AvalaraBase):
             f = Document._clean_float(discount)
             setattr(self, 'Discount', f)
         except ValueError:
-            raise AvalaraValidationException('Discount should either be a float, or string that is parsable into a float')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_FLOAT, 'Discount should either be a float, or string that is parsable into a float')
 
     def clean_Commit(self):
         commit = getattr(self, 'Commit', None)
         if commit is not None:
             if commit is not True and commit is not False:
-                raise AvalaraValidationException('Commit should either be True, or False')
+                raise AvalaraValidationException(AvalaraException.CODE_BAD_BOOL, 'Commit should either be True, or False')
 
     def clean_PaymentDate(self):
         pay_date = getattr(self, 'PaymentDate', None)
@@ -423,19 +444,19 @@ class Document(AvalaraBase):
             date = Document._clean_date(pay_date)
             setattr(self, 'PaymentDate', date)
         except ValueError:
-            raise AvalaraValidationException('PaymentDate should either be a date object, or a string in this date format: YYYY-MM-DD')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_DATE, 'PaymentDate should either be a date object, or a string in this date format: YYYY-MM-DD')
 
     def set_detail_level(self, detail_level):
         """Add a DetailLevel instance to this Avalara document"""
         if isinstance(detail_level, DetailLevel):
             setattr(self, 'DetailLevel', detail_level)
         else:
-            raise AvalaraTypeException('%r is not a %r' % (detail_level, DetailLevel))
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_DETAIL, '%r is not a %r' % (detail_level, DetailLevel))
 
     def add_line(self, line):
         """Adds a Line instance to this document. Will provide a LineNo if you do not"""
         if not isinstance(line, Line):
-            raise AvalaraTypeException('%r is not a %r' % (line, Line))
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_LINE, '%r is not a %r' % (line, Line))
         if not hasattr(line, 'LineNo'):
             count = len(self.Lines)
             setattr(line, 'LineNo', count + 1)  # start at one
@@ -445,9 +466,9 @@ class Document(AvalaraBase):
     def add_from_address(self, address):
         """Only use this function when performing a simple shipping operation. The default from address code will be used for this address"""
         if hasattr(self, 'from_address_code'):
-            raise AvalaraException('You have already set a from address. If you are doing something beyond a simple order, just use the `add_address` method')
+            raise AvalaraException(AvalaraException.CODE_HAS_FROM, 'You have already set a from address. If you are doing something beyond a simple order, just use the `add_address` method')
         if not isinstance(address, Address):
-            raise AvalaraTypeException('%r is not a %r' % (address, Address))
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
             setattr(address, 'AddressCode', Address.DEFAULT_FROM_ADDRESS_CODE)
             Document.logger.debug('%s setting default from address code' % getattr(self, 'DocCode', None))
@@ -457,9 +478,9 @@ class Document(AvalaraBase):
     def add_to_address(self, address):
         """Only use this function when performing a simple shipping operation. The default to address code will be used for this address"""
         if hasattr(self, 'to_address_code'):
-            raise AvalaraException('You have already set a to address. If you are doing something beyond a simple order, just use the `add_address` method')
+            raise AvalaraException(AvalaraException.CODE_HAS_TO, 'You have already set a to address. If you are doing something beyond a simple order, just use the `add_address` method')
         if not isinstance(address, Address):
-            raise AvalaraTypeException('%r is not a %r' % (address, Address))
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
             setattr(address, 'AddressCode', Address.DEFAULT_TO_ADDRESS_CODE)
             Document.logger.debug('%s setting default to address code' % getattr(self, 'DocCode', None))
@@ -469,7 +490,7 @@ class Document(AvalaraBase):
     def add_address(self, address):
         """Adds an Address instance to this document. Nothing about the address will be changed, you are entirely responsible for it"""
         if not isinstance(address, Address):
-            raise AvalaraTypeException('%r is not a %r' % (address, Address))
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         self.Address.append(address)
 
     def validate_codes(self):
@@ -478,23 +499,23 @@ class Document(AvalaraBase):
         for l in self.Lines:
             if not hasattr(l, 'OriginCode'):
                 if not hasattr(self, 'from_address_code'):
-                    raise AvalaraValidationException('Origin Code needed for Line Item %r' % l.LineNo)
+                    raise AvalaraValidationException(AvalaraException.CODE_BAD_ORIGIN, 'Origin Code needed for Line Item %r' % l.LineNo)
                 l.OriginCode = self.from_address_code
                 Document.logger.debug('%s setting origin code %s' % (getattr(self, 'DocCode', None), l.OriginCode))
             if not hasattr(l, 'DestinationCode'):
                 if not hasattr(self, 'to_address_code'):
-                    raise AvalaraValidationException('DestinationCode needed for Line Item %r' % l.LineNo)
+                    raise AvalaraValidationException(AvalaraException.CODE_BAD_DEST, 'DestinationCode needed for Line Item %r' % l.LineNo)
                 l.DestinationCode = self.to_address_code
                 Document.logger.debug('%s setting destination code %s' % (getattr(self, 'DocCode', None), l.DestinationCode))
 
     def validate(self):
         """Ensures we have addresses and line items. Then calls validate_codes"""
         if not hasattr(self, 'DocType'):
-            raise AvalaraValidationException('You need to set a DocType')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_DOCTYPE, 'You need to set a DocType')
         if len(self.Addresses) == 0:
-            raise AvalaraValidationException('You need Addresses')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_ADDRESS, 'You need Addresses')
         if len(self.Lines) == 0:
-            raise AvalaraValidationException('You need Line Items')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_LINE, 'You need Line Items')
         self.validate_codes()
 
     @property
@@ -530,7 +551,7 @@ class Line(AvalaraBase):
             i = Document._clean_int(qty)
             setattr(self, 'Qty', i)
         except ValueError:
-            raise AvalaraValidationException('Qty should either be a float, or string that is parsable into a float')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_FLOAT, 'Qty should either be a float, or string that is parsable into a float')
 
     def clean_Amount(self):
         amount = getattr(self, 'Amount', None)
@@ -538,12 +559,12 @@ class Line(AvalaraBase):
             f = Document._clean_float(amount)
             setattr(self, 'Amount', f)
         except ValueError:
-            raise AvalaraValidationException('Amount should either be a float, or string that is parsable into a float')
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_FLOAT, 'Amount should either be a float, or string that is parsable into a float')
 
     def clean_ItemCode(self):
         code = getattr(self, 'ItemCode', None)
         if code and len(code) > 50:
-            raise AvalaraValidationException('ItemCode cannot be longer than 50 characters')
+            raise AvalaraValidationException(AvalaraException.CODE_TOO_LONG, 'ItemCode cannot be longer than 50 characters')
 
 
 class Address(AvalaraBase):

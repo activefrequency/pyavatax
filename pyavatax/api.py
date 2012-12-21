@@ -8,7 +8,6 @@ def except_500_and_return(fn, *args, **kwargs):
         return fn(*args, **kwargs)
     except AvalaraServerException as e:
         self = args[0]  # the first arg is self
-        print self
         self.logger.error(e.full_request_as_string)
         resp = ErrorResponse(e.response)
         for arg in args:

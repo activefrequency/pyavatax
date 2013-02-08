@@ -37,8 +37,8 @@ class AvaTaxSoapAPI(object):
 
     def _get_credentials(self, username, password):
         token = suds.wsse.UsernameToken(username, password)
-        token.setnonce()
         token.setcreated()
+        #token.setnonce()
         security = suds.wsse.Security()
         security.tokens.append(token)
         return security

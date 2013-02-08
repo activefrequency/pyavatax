@@ -659,7 +659,7 @@ class TaxDetails(AvalaraBase):
 
 class TaxLines(AvalaraBase):
     """Represents TaxLines response from Avalara"""
-    _fields = ['LineNo', 'TaxCode', 'Taxability', 'Taxable', 'Rate', 'Tax', 'Discount', 'TaxCalculated', 'Exemption']
+    _fields = ['LineNo', 'TaxCode', 'BoundaryLevel', 'Taxability', 'Taxable', 'Rate', 'Tax', 'Discount', 'TaxCalculated', 'Exemption']
     _contains = ['TaxDetails']
 
 

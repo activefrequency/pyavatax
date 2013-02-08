@@ -28,14 +28,33 @@ def isiterable(foo):
         return True
 
 
+class AvalaraLogging(object):
+    logger = None
+
+    @staticmethod
+    def get_logger():
+        if not AvalaraLogging.logger:
+            AvalaraLogging.logger = logging.getLogger('pyavatax.api')
+        return AvalaraLogging.logger
+
+    @staticmethod
+    def set_logger(logger):
+        if isinstance(logger, logging.Logger):
+            AvalaraLogging.logger = logger
+        else:
+            raise AvalaraException('Please pass an object inheriting from logging.Logger')
+
+
 class AvalaraBase(object):
     """Base object for parsing and outputting json"""
     _fields = []  # a list of simple attributes on this object
     _contains = []  # a list of other objects contained by this object
     _has = []  # a list of single objects contained by this object
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, allow_new_fields=False, *args, **kwargs):
         self._setup()
+        self.allow_new_fields = allow_new_fields
+        self.logger = AvalaraLogging.get_logger()
         self.update(**kwargs)
 
     def _setup(self):
@@ -63,6 +82,12 @@ class AvalaraBase(object):
         _k = 'Line' if k == 'Lines' else _k
         return _k
 
+    def _invalid_field(self, field):
+        msg = AvalaraException.CODE_INVALID_FIELD, '%s is not a valid field' % field
+        self.logger.warning(msg)  # development environments will have a test failure when logs don't match expected outcomes
+        if not self.allow_new_fields:
+            raise AvalaraException(msg)  # incoming data from avalara allows new fields, so as to not break if they ship an update without incrementing API versions
+
     def update(self, *args, **kwargs):
         """Updates kwargs onto attributes of self"""
         for k, v in kwargs.iteritems():
@@ -73,17 +98,16 @@ class AvalaraBase(object):
                 if isinstance(v, klass):
                     setattr(self, k, v)
                 elif isinstance(v, dict):
-                    setattr(self, k, klass(**v))
+                    setattr(self, k, klass(allow_new_fields=self.allow_new_fields, **v))
             elif k in self._contains:  # contains many objects
                 klass = str_to_class(self._handle_pluralize(k))
                 for _v in v:
                     if isinstance(_v, klass):
                         getattr(self, k).append(_v)
                     elif isinstance(_v, dict):
-                        getattr(self, k).append(klass(**_v))
+                        getattr(self, k).append(klass(allow_new_fields=self.allow_new_fields,**_v))
             else:
-                pass
-                #raise AvalaraException(AvalaraException.CODE_INVALID_FIELD, '%s is not a valid field' % k)
+                self._invalid_field(k)
         self.clean()
 
     def todict(self):
@@ -121,7 +145,7 @@ class BaseAPI(object):
     default_timeout = 10.0
     logger = None
 
-    def __init__(self, username=None, password=None, live=False, timeout=None, proxies={}, logger=None, recorder=None, **kwargs):
+    def __init__(self, username=None, password=None, live=False, timeout=None, proxies={}, recorder=None, **kwargs):
         self.host = self.PRODUCTION_HOST if live else self.DEVELOPMENT_HOST  # from the child API class
         self.url = "%s://%s" % (BaseAPI.protocol, self.host)
         self.username = username
@@ -129,9 +153,7 @@ class BaseAPI(object):
         self.headers = BaseAPI.default_headers.update({'Host': self.host})
         self.password = password
         self.timeout = timeout or BaseAPI.default_timeout
-        if logger is None:
-            logger = logging.getLogger('pyavatax.api')
-        self.logger = logger
+        self.logger = AvalaraLogging.get_logger()
         if recorder is None:
             recorder = get_django_recorder()
         self.recorder = recorder
@@ -178,7 +200,7 @@ class BaseResponse(AvalaraBase):
 
     def __init__(self, response, *args, **kwargs):
         self.response = response
-        super(BaseResponse, self).__init__(*args, **response.json)
+        super(BaseResponse, self).__init__(*args, allow_new_fields=True, **response.json)
 
     @property
     def _details(self):

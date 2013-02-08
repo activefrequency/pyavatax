@@ -82,7 +82,8 @@ class AvalaraBase(object):
                     elif isinstance(_v, dict):
                         getattr(self, k).append(klass(**_v))
             else:
-                raise AvalaraException(AvalaraException.CODE_INVALID_FIELD, '%s is not a valid field' % k)
+                pass
+                #raise AvalaraException(AvalaraException.CODE_INVALID_FIELD, '%s is not a valid field' % k)
         self.clean()
 
     def todict(self):

@@ -291,6 +291,16 @@ class AvalaraValidationException(AvalaraException):
     pass
 
 
+class AvalaraServerNotReachableException(AvalaraBaseException):
+    """Raised when the AvaTax service is unreachable for any reason and no response is received"""
+    
+    def __init__(self, request_exception, *args, **kwargs):
+        self.request_exception = request_exception
+
+    def __str__(self):
+        return repr(self.request_exception)
+
+
 class AvalaraServerException(AvalaraBaseException):
     """Used internally to handle 500 and other server error responses"""
 
@@ -316,24 +326,6 @@ class AvalaraServerException(AvalaraBaseException):
 
     def __str__(self):
         return "%r, %r %r" % (repr(self.status_code), repr(self.method), repr(self.url))
-
-
-class AvalaraServerNotReachableException(AvalaraServerException):
-    """Raised when the AvaTax service is unreachable for any reason and no response is received"""
-    
-    def __init__(self, request_exception, *args, **kwargs):
-        self.request_exception = request_exception
-
-    def __str__(self):
-        return repr(self.request_exception)
-
-    @property
-    def full_request_as_string(self):
-        return self.__str__()
-
-    @property
-    def errors(self):
-        return self.__str__()
 
 
 class AvalaraServerDetailException(AvalaraServerException):

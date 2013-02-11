@@ -108,17 +108,23 @@ Handling a response
 -------------------
 Looks like:
 ::
-    response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
-    if response.is_success is True:
-        return response.Tax
+    try:
+        response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
+    except AvalaraServerNotReachableException:
+        raise ApplicationException('Avalara is currently down')
     else:
-        raise ApplicationException(response.error)
+        if response.is_success is True:
+            return response.Tax
+        else:
+            raise ApplicationException(response.error)
 
 The JSON response from AvaTax is automatically parsed onto the response object. In the case of a "GetTax" call the attribute 'Tax' is the total taxable amount for your transaction.
 
 If the response is not successful, the ``error`` attribute is a list of tuples. The first item is either the offending field (if there is one) or the AvaTax class which threw the error. The second item is a human readable description of the error provided by AvaTax.
 
 Should you need access to the actual response or request, the ``response`` attribute is the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out the AvaTax documentation.
+
+You should use a ``try:  except:`` block to catch ``AvalaraServerNotReachableException`` in the case your network, or Avalara's network has connectivity problems.
 
 Since the ``Request`` library sits on top of urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup Charles Proxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
 

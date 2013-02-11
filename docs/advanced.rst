@@ -39,6 +39,8 @@ Running the Tests
 
 If you're working with the source code and want to run our tests, as stated previously, we are using pytest. I've written tests specifically for the Django features. If you're not running in a django environment just be prepared those tests will fail gracefully, and that is expected.
 
+Our test script uses a ``settings_local.py`` secrets file that we don't ship with this package. I've included a ``settings_local.py.example`` file that you can copy into ``settings_local.py`` and update with your credentials.
+
 If you have a Django environment you can run ``manage.py shell`` locally and then this:
 ::
     >>> import pytest

@@ -1,0 +1,3 @@
+AVALARA_ACCOUNT_NUMBER = 9999999  # put your account number here
+AVALARA_LICENSE_KEY = ''  # put your license key
+AVALARA_COMPANY_CODE = 'YOURCOMPANYCODE'  # this is all caps

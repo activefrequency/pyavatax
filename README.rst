@@ -3,6 +3,9 @@ PyAvaTax
 
 PyAvaTax is a Python library for easily integrating Avalara’s RESTful AvaTax API Service. You will need an account with Avalara  (www.avalara.com).
 
+Getting Started
+---------------
+
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
 ::
     {
@@ -57,3 +60,7 @@ Or, an integration using the PyAvaTax library can be done by constructing object
     doc.add_line(line)
     response = api.post_tax(doc)
 
+Further Reading
+---------------
+
+Documentation is in *docs*, or at https://pyavatax.readthedocs.org/en/latest/; see *Advanced* (https://pyavatax.readthedocs.org/en/latest/advanced.html) for instructions on running the test suite.

@@ -200,7 +200,7 @@ class BaseResponse(AvalaraBase):
 
     def __init__(self, response, *args, **kwargs):
         self.response = response
-        super(BaseResponse, self).__init__(*args, allow_new_fields=True, **response.json)
+        super(BaseResponse, self).__init__(*args, allow_new_fields=True, **response.json())
 
     @property
     def _details(self):
@@ -214,9 +214,9 @@ class BaseResponse(AvalaraBase):
         """Returns whether or not the response was successful"""
         if not hasattr(self.response, 'json'):
             raise AvalaraException('No response found')
-        if 'ResultCode' not in self.response.json:
+        if 'ResultCode' not in self.response.json():
             raise AvalaraException('is_success not applicable for this response')
-        cond = self.response.json.get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS
+        cond = self.response.json().get('ResultCode', BaseResponse.ERROR) == BaseResponse.SUCCESS
         return True if cond else False
 
     @property
@@ -225,9 +225,9 @@ class BaseResponse(AvalaraBase):
         either the offending field that threw an error, or the class in
         the Avalara system that threw it. The second position is a
         human-readable message from Avalara"""
-        if 'ResultCode' not in self.response.json:
+        if 'ResultCode' not in self.response.json():
             raise AvalaraException('error not applicable for this response')
-        cond = self.response.json.get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR
+        cond = self.response.json().get('ResultCode', BaseResponse.SUCCESS) == BaseResponse.ERROR
         return self._details if cond else False
 
 
@@ -308,10 +308,10 @@ class AvalaraServerException(AvalaraBaseException):
         self.response = response
         self.status_code = response.status_code
         self.raw_response = response.text
-        self.request_data = response.request.data
+        self.request_data = response.request.body
         self.method = response.request.method
-        self.url = response.request.full_url
-        self.has_details = True if response.json else False
+        self.url = response.request.url
+        self.has_details = True if response.json() else False
 
     @property
     def full_request_as_string(self):

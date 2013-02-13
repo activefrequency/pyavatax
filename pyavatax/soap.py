@@ -77,6 +77,7 @@ class AvaTaxSoapAPI(object):
                 if hasattr(l, f):
                     _f = 'No' if f == 'LineNo' else f  # hack :/
                     setattr(line, _f, getattr(l, f))
+            line.Discounted = False
             _line.append(line)
         lines = self.client.factory.create('ArrayOfLine')
         lines.Line = _line

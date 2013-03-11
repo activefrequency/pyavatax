@@ -1,10 +1,18 @@
+.. _Avalara: http://www.avalara.com
+
 PyAvaTax
-========
+=========
 
-PyAvaTax is a Python library for easily integrating Avalara’s RESTful AvaTax API Service. You will need an account with Avalara  (www.avalara.com).
+Release v\ |version|
 
-Getting Started
----------------
+What is PyAvaTax?
+------------------
+
+As of Sept 2012 internet retailers are required to pay sales tax in all the states they do business. Avalara_ offers a fully featured web-based service to report your transactions, return your sales tax, and store all the information until you need to report it.
+
+We developed PyAvaTax as a Python client library for easily integrating with Avalara's RESTful AvaTax API Service to report your transactions.
+
+PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out!
 
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
 ::
@@ -40,15 +48,18 @@ AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
         ],
     }
 
-The PyAvaTax API object accepts a Python dictionary that looks just like the above data. We will parse it, validate it, handle the HTTP layer for you, and return an object to you.
+Our library, accepts your data in a variety of ways. You instantiate the API like so
 ::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
+
+Then, you can perform an action (e.g. "Post Tax"), by passing in a data dictionary. We will parse it, validate it, handle the HTTP layer for you, and return a response object to you.
+::
     tax_response = api.post_tax(dictionary_data)
     print tax_response.TotalTax
 
 That returned object will have all the response data from AvaTax easily accessible by dot-notation.
 
-Or, an integration using the PyAvaTax library can be done by constructing objects:
+Or, you can use the library to construct objects from kwargs
 ::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@email.com')
@@ -59,6 +70,7 @@ Or, an integration using the PyAvaTax library can be done by constructing object
     line = Line(Amount=10.00)
     doc.add_line(line)
     response = api.post_tax(doc)
+
 
 Further Reading
 ---------------

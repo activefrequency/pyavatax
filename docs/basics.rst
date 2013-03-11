@@ -1,4 +1,11 @@
 .. _basics:
+.. _short wiki entry: http://en.wikipedia.org/wiki/Pip_(Python)
+.. _pypi.org: https://pypi.python.org/pypi
+.. _Validate Address: http://developer.avalara.com/api-docs/rest/resources/address-validation
+.. _Get Tax: http://developer.avalara.com/api-docs/rest/resources/tax/get
+.. _Post Tax: http://developer.avalara.com/api-docs/best-practices/document-lifecycle/posttax-and-committax
+.. _Cancel Tax: http://developer.avalara.com/api-docs/rest/resources/tax/cancel
+
 
 The Basics
 ==========
@@ -11,9 +18,72 @@ Of course, for more complicated interactions all the AvaTax flexibility is at yo
 Installing the Project
 ----------------------
 
+If you are using pip (we *highly* recommend using it for managing your Python packages), this is the installation command:
+
 ``pip install pyavatax``
 
 If you are using this project via its source files you will find the dependencies of the project in the provided requirements.txt file. We use `py.test` for testing, but you don't need to install that to use the library.
+
+``pip install -r requirements.txt``
+
+If you are unfamiliar with pip/pypi you should check out the `short wiki entry`_ page, and then `pypi.org`_
+
+
+Copy & Paste
+------------
+
+If you're looking for something to copy and paste into your python code base and play with, try this block of code. However, I do ask that you continue to read this basics section (at least) to get a better idea of exactly what is going on.
+::
+
+    import pyavatax
+    api = pyavatax.API(YOUR_AVALARA_ACCOUNT_NUMBER, YOUR_AVALARA_LICENSE_KEY, YOUR_AVALARA_COMPANY_CODE, live=False)
+    data = {
+        "DocDate": "2012-06-13",
+        "CompanyCode": YOUR_AVALARA_COMPANY_CODE,
+        "CustomerCode": "YourClientsCustomerCode",
+        "DocCode": "20120613-1",
+        "DocType": "SalesOrder",
+        "Addresses":
+        [
+            {
+                "AddressCode": "1",
+                "Line1": "435 Ericksen Avenue Northeast",
+                "Line2": "#250",
+                "City": "Bainbridge Island",
+                "Region": "WA",
+                "PostalCode": "98110",
+                "Country": "US",
+            },
+            {
+                "AddressCode": "2",
+                "Line1": "7562 Kearney St.",
+                "City": "Commerce City",
+                "Region": "CO",
+                "PostalCode": "80022-1336",
+                "Country": "US",
+            },
+        ],
+        "Lines":
+        [
+            {
+                "LineNo": "1",
+                "DestinationCode": "2",
+                "OriginCode": "1",
+                "ItemCode": "AvaDocs",
+                "Description": "Box of Avalara Documentation",
+                "Qty": 1,
+                "Amount": "100",
+            },
+        ],
+    }
+    tax = api.post_tax(data)
+    except pyavatax.AvalaraServerNotReachableException:
+        raise Exception('Avalara is currently down')
+    else:
+        if response.is_success is True:
+            response.Tax  # has your total amount of tax for this transaction
+        else:
+            raise Exception(response.error)  # Avalara found a problem with your data
 
 
 Instantiating the API
@@ -45,7 +115,7 @@ For all the API calls you can pass a dictionary, or an object:
 
 Making an API call
 ------------------
-Looks like:
+Here are a few example calls. You can find Avalara's documentation on each of these calls and the parameteres they expect here: `Validate Address`_, `Get Tax`_, `Post Tax`_, `Cancel Tax`_  
 ::
     response = api.validate_address(address)
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
@@ -57,7 +127,7 @@ Looks like:
 
 Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivalent of doing this:
 ::
-    doc.update(Commit=True)
+    doc.update({'Commit': True})
     api.post_tax(doc)
 
 However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you.
@@ -91,9 +161,9 @@ Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the doc
 
 For simple shipping cases you can use the helper functions ``add_to_address`` and ``add_from_address``. These will manually add the AvaTax ``OriginCode`` and ``DestinationCode`` to the corresponding ``AddressCode``. If your shipping scenario isn't simple, we cannot assume what you're doing - so you will have to input that data onto the objects yourself. Here is an exaggerated example to make this use case as clear as possible:
 ::
-    address.update(AddressCode=3)
-    another_address.update(AddressCode=2)
-    a_third_address.update(AddressCode=1)
+    address.update({'AddressCode': 3})  # updating address dictionary with address code
+    another_address.update({'AddressCode': 2})
+    a_third_address.update({'AddressCode': 1})
     line.update({'OriginCode': 1, 'DestinationCode': 3})
     another_line.update({'OriginCode': 2, 'DestinationCode': 3})
     doc.add_address(address)
@@ -140,5 +210,4 @@ You can pass your own logger, should you so choose, like so:
     AvalaraLogging.set_logger(my_custom_logger)
     # subsequent api calls will use the custom logger
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
-
 

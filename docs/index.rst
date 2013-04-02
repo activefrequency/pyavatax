@@ -9,8 +9,6 @@
 PyAvaTax
 =========
 
-Release v\ |version|
-
 What is PyAvaTax?
 ------------------
 

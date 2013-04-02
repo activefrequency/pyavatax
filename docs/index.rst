@@ -70,12 +70,9 @@ Or, you can use the library to construct objects from kwargs
 ::
     api = API(AVALARA_ACCOUNT_NUMBER, AVALARA_LICENSE_KEY, AVALARA_COMPANY_CODE)
     doc = Document.new_sales_order(DocCode='1001', DocDate=datetime.date.today(), CustomerCode='email@example.com')
-    from_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
-    to_address = Address(Line1="7562 Kearney St.", PostalCode="80022-1336")
-    doc.add_from_address(from_address)
-    doc.add_to_address(to_address)
-    line = Line(Amount=10.00)
-    doc.add_line(line)
+    doc.add_from_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    doc.add_to_address(Line1="7562 Kearney St.", PostalCode="80022-1336")
+    doc.add_line(Amount=10.00)
     response = api.post_tax(doc)
 
 

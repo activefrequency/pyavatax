@@ -469,15 +469,19 @@ class Document(AvalaraBase):
         except ValueError:
             raise AvalaraValidationException(AvalaraException.CODE_BAD_DATE, 'PaymentDate should either be a date object, or a string in this date format: YYYY-MM-DD')
 
-    def set_detail_level(self, detail_level):
+    def set_detail_level(self, detail_level=None, **kwargs):
         """Add a DetailLevel instance to this Avalara document"""
+        if kwargs:
+            detail_level = DetailLevel(**kwargs)
         if isinstance(detail_level, DetailLevel):
             setattr(self, 'DetailLevel', detail_level)
         else:
             raise AvalaraTypeException(AvalaraException.CODE_BAD_DETAIL, '%r is not a %r' % (detail_level, DetailLevel))
 
-    def add_line(self, line):
+    def add_line(self, line=None, **kwargs):
         """Adds a Line instance to this document. Will provide a LineNo if you do not"""
+        if kwargs:
+            line = Line(**kwargs)
         if not isinstance(line, Line):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_LINE, '%r is not a %r' % (line, Line))
         if not hasattr(line, 'LineNo'):
@@ -486,10 +490,12 @@ class Document(AvalaraBase):
             Document.logger.debug('%s inserting LineNo %d' % (getattr(self, 'DocCode', None), line.LineNo))
         self.Lines.append(line)
 
-    def add_from_address(self, address):
+    def add_from_address(self, address=None, **kwargs):
         """Only use this function when performing a simple shipping operation. The default from address code will be used for this address"""
         if hasattr(self, 'from_address_code'):
             raise AvalaraException(AvalaraException.CODE_HAS_FROM, 'You have already set a from address. If you are doing something beyond a simple order, just use the `add_address` method')
+        if kwargs:
+            address = Address(**kwargs)
         if not isinstance(address, Address):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
@@ -498,10 +504,12 @@ class Document(AvalaraBase):
         self.from_address_code = getattr(address, 'AddressCode')
         self.Addresses.append(address)
 
-    def add_to_address(self, address):
+    def add_to_address(self, address=None, **kwargs):
         """Only use this function when performing a simple shipping operation. The default to address code will be used for this address"""
         if hasattr(self, 'to_address_code'):
             raise AvalaraException(AvalaraException.CODE_HAS_TO, 'You have already set a to address. If you are doing something beyond a simple order, just use the `add_address` method')
+        if kwargs:
+            address = Address(**kwargs)
         if not isinstance(address, Address):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         if not hasattr(address, 'AddressCode'):
@@ -510,8 +518,10 @@ class Document(AvalaraBase):
         self.to_address_code = getattr(address, 'AddressCode')
         self.Addresses.append(address)
 
-    def add_address(self, address):
+    def add_address(self, address=None, **kwargs):
         """Adds an Address instance to this document. Nothing about the address will be changed, you are entirely responsible for it"""
+        if kwargs:
+            address = Address(**kwargs)
         if not isinstance(address, Address):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
         self.Address.append(address)

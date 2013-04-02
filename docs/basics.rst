@@ -176,6 +176,12 @@ For simple shipping cases you can use the helper functions ``add_to_address`` an
     doc.add_line(line)
     doc.add_line(another_line)
 
+Alternatively, if you don't have to have address objects running around for you to modify at a future point before adding to them to a document, you can do it all in one step (like you saw on the documentation index page)
+::
+    doc.add_from_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    doc.add_to_address(**kwargs)
+
+
 
 
 Handling a response

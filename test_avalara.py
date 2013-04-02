@@ -145,7 +145,7 @@ def test_validation():
         doc.add_from_address(from_address)
     assert e.value.code == AvalaraException.CODE_HAS_FROM
     with pytest.raises(AvalaraException) as e:
-        doc.add_to_address(from_address)
+        doc.add_to_address(to_address)
     assert e.value.code == AvalaraException.CODE_HAS_TO
     line = Line(Amount=10.00)
     doc.add_line(line)
@@ -168,12 +168,9 @@ def test_posttax():
         api = get_api()
         # dont pass a doccode
         doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com')
-        to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
-        from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
-        doc.add_from_address(from_address)
-        doc.add_to_address(to_address)
-        line = Line(Amount=10.00)
-        doc.add_line(line)
+        doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+        doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+        doc.add_line(Amount=10.00)
         # make sure i don't have a doccode
         try:
             doc.DocCode

@@ -5,12 +5,13 @@
 .. _Get Tax: http://developer.avalara.com/api-docs/rest/resources/tax/get
 .. _Post Tax: http://developer.avalara.com/api-docs/best-practices/document-lifecycle/posttax-and-committax
 .. _Cancel Tax: http://developer.avalara.com/api-docs/rest/resources/tax/cancel
+.. _Request and proxies here: http://requests.readthedocs.org/en/latest/user/advanced/#proxies
 
 
 The Basics
 ==========
 
-You can rely on our integration to validate what information you're providing. We handle the simple case of shipping and line numbers, so you don't have to think about AvaTax's abstractions and data structures.
+You can rely on our integration to validate what information you're providing. We handle the simple case of shipping and line numbers, so you don't have to think about AvaTax's abstractions and data structures. If you don't add line numbers to your items, we'll add them for you. If you use ``add_to_address`` and ``add_from_address`` you can ignore the ``AddressCode`, ``DestinationCode``, and ``OriginCode`` attributes as well. See the section below about creating a document manually for steps on how to do this.
 
 Of course, for more complicated interactions all the AvaTax flexibility is at your disposal.
 
@@ -76,14 +77,15 @@ If you're looking for something to copy and paste into your python code base and
             },
         ],
     }
-    tax = api.post_tax(data)
+    try:
+        tax = api.post_tax(data)
     except pyavatax.AvalaraServerNotReachableException:
         raise Exception('Avalara is currently down')
-    else:
-        if response.is_success is True:
-            response.Tax  # has your total amount of tax for this transaction
+    else:  # try else runs whenever there is no exception
+        if tax.is_success is True:
+            tax.total_tax  # has your total amount of tax for this transaction
         else:
-            raise Exception(response.error)  # Avalara found a problem with your data
+            raise Exception(tax.error)  # Avalara found a problem with your data
 
 
 Instantiating the API
@@ -93,7 +95,7 @@ Looks like:
     import pyavatax
     api = pyavatax.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
 
-Once you have an account with AvaTax their dashboard page contains the account number and license number. You can choose a meaningful company code.
+Once you have an account with AvaTax their dashboard page contains the account number and license number. You can choose a meaningful company code. When live is `False`, the request will be sent to Avalara's test environment. When it is is `True` it will be sent to the production environment.
 
 
 Creating a Document From Data
@@ -118,9 +120,11 @@ Making an API call
 Here are a few example calls. You can find Avalara's documentation on each of these calls and the parameteres they expect here: `Validate Address`_, `Get Tax`_, `Post Tax`_, `Cancel Tax`_  
 ::
     response = api.validate_address(address)
-    response = api.get_tax(lat=47.627935, lng=-122.51702, doc)
+    lat = 47.627935
+    lng = -122.51702
+    response = api.get_tax(lat, lng, doc)
     # in lieu of making a whole document, you can alternatively pass the amount to be taxed
-    response = api.get_tax(lat=47.627935, lng=-122.51702, None, sale_amount=100.00)
+    response = api.get_tax(lat, lng, None, sale_amount=100.00)
     response = api.post_tax(doc)
     response = api.post_tax(doc, commit=True)
     response = api.cancel_tax(doc)
@@ -132,7 +136,7 @@ Using the ``commit=True`` on the post_tax call is a shortcut, it is the equivale
 
 However, it will also perform an additional check. Submitting a ``SalesOrder`` (any ``XXXXXOrder``) to AvaTax with ``Commit=True`` won't result in a saved and committed document. It is the wrong type. It needs to be ``SalesInvoice`` ( or ``XXXXXXInvoice``). So if we find an ``XXXXXOrder`` and you pass ``commit=True`` we will automatically update the type for you.
 
-You can perform that update logic anywhere and know that ``post_tax`` even without ``commit`` will remain true to the document's state.
+So far you have noticed we are always using ``SalesOrder`` and ``SalesInvoice`` in our examples. This is for when you are selling products to customers, the most basic example. Other document types are ``ReturnOrder``, ``ReturnInvoice``, ``PurchaseOrder``, ``PurchaseInvoice``, ``InventoryTransferOrder``, and ``InventoryTransferInvoice``. They are used when a customer is returning an item, when you're purchasing items, and when you're transfering inventory.
 
 As an added convenience the response objects from ``post_tax`` and ``get_tax`` have a ``total_tax`` property:
 ::
@@ -192,11 +196,11 @@ The JSON response from AvaTax is automatically parsed onto the response object. 
 
 If the response is not successful, the ``error`` attribute is a list of tuples. The first item is either the offending field (if there is one) or the AvaTax class which threw the error. The second item is a human readable description of the error provided by AvaTax.
 
-Should you need access to the actual response or request, the ``response`` attribute is the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out the AvaTax documentation.
+Should you need access to the actual response or request, the ``response`` attribute has the ``Request`` object which has ``headers``, ``full_url``, ``body``, and other parameters. The ``response`` attribute also has a ``request`` attribute which contains information about the raw request. If you need more details check out the AvaTax documentation.
 
 You should use a ``try:  except:`` block to catch ``AvalaraServerNotReachableException`` in the case your network, or Avalara's network has connectivity problems.
 
-Since the ``Request`` library sits on top of urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup Charles Proxy, an excellent and free GUI application for sniffing the exact data being sent over the wire.
+Since the ``Request`` library sits on top of urllib you may not get the **exact data/headers being transmitted**. To account for this you can pass a ``proxies`` dictionary to the ``API`` constructor. You can use this setting to setup Charles Proxy, an excellent and free GUI application for sniffing the exact data being sent over the wire. You can see more detail about `Request and proxies here`_: 
 
 
 Logging
@@ -206,7 +210,7 @@ PyAvaTax uses standard Python logging, with a logger called ``pyavatax.api``. Al
 
 You can pass your own logger, should you so choose, like so:
 ::
-    import pyavatax.AvalaraLogging
+    import pyavatax.base.AvalaraLogging
     AvalaraLogging.set_logger(my_custom_logger)
     # subsequent api calls will use the custom logger
     response = api.get_tax(lat=47.627935, lng=-122.51702, doc)

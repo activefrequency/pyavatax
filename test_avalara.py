@@ -306,7 +306,8 @@ def test_override_failure():
     try:
         from pyavatax.models import AvaTaxRecord
     except ImportError:  # no django
-        raise Exception('This can only be run inside a django environment')
+        pytest.mark.xfail('This can only be run inside a django environment')
+        return
     import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
@@ -332,7 +333,8 @@ def test_recorder():
     try:
         from pyavatax.models import AvaTaxRecord
     except ImportError:  # no django
-        raise Exception('This can only be run inside a django environment')
+        pytest.mark.xfail('This can only be run inside a django environment')
+        return
     import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()

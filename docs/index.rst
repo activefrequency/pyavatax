@@ -14,7 +14,7 @@ What is PyAvaTax?
 
 As of Sept 2012 US internet retailers are required to pay sales tax in all the states they do business. Avalara_ offers a fully featured web-based service to report your transactions, return your sales tax, and store all the information until you need to report it.
 
-Avalara is a US-only service, and thus all amounts passing through their system, and this api are assumed to be US Dollars (USD)
+Avalara is a US-only service, and thus all amounts passing through their system, and this api, are assumed to be US Dollars (USD)
 
 We developed PyAvaTax as a Python client library for easily integrating with Avalara's RESTful AvaTax API Service to report your transactions.
 

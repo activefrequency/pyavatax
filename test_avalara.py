@@ -1,6 +1,5 @@
-from pyavatax.base import Document, Line, Address, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerNotReachableException
+from pyavatax.base import Document, Line, Address, TaxOverride, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerNotReachableException
 from pyavatax.api import API
-from pyavatax.soap import AvaTaxSoapAPI
 import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest
@@ -9,10 +8,6 @@ from testfixtures import LogCapture
 
 def get_api(timeout=None):
     return API(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, settings_local.AVALARA_COMPANY_CODE, live=False, timeout=timeout)
-
-
-def get_soap_api():
-    return AvaTaxSoapAPI(settings_local.AVALARA_ACCOUNT_NUMBER, settings_local.AVALARA_LICENSE_KEY, live=False)
 
 
 @pytest.mark.example
@@ -285,15 +280,12 @@ def test_override():
         doc.add_to_address(to_address)
         line = Line(Amount=10.00)
         doc.add_line(line)
+        tax_date = datetime.date.today() - datetime.timedelta(days=5)
+        doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_DATE, TaxDate=tax_date, Reason="Tax Date change",)
         tax = api.post_tax(doc)
         assert tax.is_success
         assert tax.total_tax > 0
-        # now the soap part
-        soap_api = get_soap_api()
-        tax_date = datetime.date.today() - datetime.timedelta(days=5)
-        tax = soap_api.tax_override(doc, tax_date=tax_date, tax_amt=0, reason="Tax Date change", override_type='TaxDate')
-        assert tax.is_success
-        assert tax.total_tax > 0
+        assert tax.TaxDate == tax_date.strftime('%Y-%m-%d')
 
 
 @pytest.mark.override
@@ -307,6 +299,7 @@ def test_override_failure():
         return
     import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    api = get_api()
     doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
@@ -315,9 +308,9 @@ def test_override_failure():
     line = Line(Amount=10.00)
     doc.add_line(line)
     doc.DocType = 'FooBar'  # forcing error
-    soap_api = get_soap_api()
     tax_date = datetime.date.today() - datetime.timedelta(days=5)
-    tax = soap_api.tax_override(doc, tax_date=tax_date, tax_amt=0, reason="Tax Date change", override_type='TaxDate')
+    doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_DATE, TaxDate=tax_date, Reason="Tax Date change",)
+    tax = api.post_tax(doc)
     assert tax.is_success == False
     assert 1 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
     assert 0 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()

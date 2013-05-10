@@ -62,6 +62,9 @@ class AvalaraBase(object):
         for field in self._contains:
             setattr(self, field, [])
 
+    def clean_me(self):
+        pass
+
     def clean(self):
         if hasattr(self, '_testing_ignore_validate'):
             return  # passthrough for a test
@@ -76,6 +79,8 @@ class AvalaraBase(object):
         for f in self._contains:
             for v in getattr(self, f):
                 v.clean()
+        """Validate myself if I need to check fields"""
+        self.clean_me()
 
     def _handle_pluralize(self, k):
         _k = 'Address' if k == 'Addresses' else k
@@ -257,6 +262,7 @@ class AvalaraBaseException(Exception):
 
 class AvalaraException(AvalaraBaseException):
     """Raised when operating unsuccessfully with document, address, line, etc objects"""
+    CODE_REQD = 50
     CODE_BAD_ARGS = 100
     CODE_BAD_DOC = 101
     CODE_BAD_LATLNG = 102
@@ -266,6 +272,7 @@ class AvalaraException(AvalaraBaseException):
     CODE_BAD_ADDRESS = 201
     CODE_BAD_DETAIL = 202
     CODE_BAD_LINE = 203
+    CODE_BAD_OVERRIDE = 204
     CODE_INVALID_FIELD = 301
     CODE_BAD_DOCTYPE = 302
     CODE_BAD_DATE = 303
@@ -274,6 +281,7 @@ class AvalaraException(AvalaraBaseException):
     CODE_BAD_ORIGIN = 306
     CODE_BAD_DEST = 307
     CODE_TOO_LONG = 308
+    CODE_BAD_OTYPE = 309
 
     def __init__(self, *args, **kwargs):
         if len(args) > 1 and isinstance(args[0], int):
@@ -357,7 +365,7 @@ class Document(AvalaraBase):
 
     _fields = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode']
     _contains = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
-    _has = ['DetailLevel']
+    _has = ['DetailLevel', 'TaxOverride']
 
     def __init__(self, logger=None, *args, **kwargs):
         super(Document, self).__init__(*args, **kwargs)
@@ -478,6 +486,14 @@ class Document(AvalaraBase):
         else:
             raise AvalaraTypeException(AvalaraException.CODE_BAD_DETAIL, '%r is not a %r' % (detail_level, DetailLevel))
 
+    def add_override(self, override=None, **kwargs):
+        """Adds a tax override instance to this document"""
+        if kwargs:
+            override = TaxOverride(**kwargs)
+        if not isinstance(override, TaxOverride):
+            raise AvalaraTypeException(AvalaraException.CODE_BAD_OVERRIDE, '%r is not a %r' % (override, TaxOverride))
+        self.TaxOverride = override
+
     def add_line(self, line=None, **kwargs):
         """Adds a Line instance to this document. Will provide a LineNo if you do not"""
         if kwargs:
@@ -563,6 +579,56 @@ class Document(AvalaraBase):
             raise AvalaraTypeException('post_tax_response must be a %r' % type(PostTaxResponse))
         setattr(self, 'DocCode', getattr(post_tax_response, 'DocCode'))
         Document.logger.debug('AvaTax assigned %s as DocCode' % getattr(self, 'DocCode', None))
+
+
+class TaxOverride(AvalaraBase):
+    """Represents an Avalara TaxOverride"""
+    OVERRIDE_NONE = 'None'
+    OVERRIDE_AMOUNT = 'TaxAmount'
+    OVERRIDE_DATE = 'TaxDate'
+    OVERRIDE_EXEMPT = 'Exemption'
+    OVERRIDE_TYPES = ( OVERRIDE_NONE, OVERRIDE_AMOUNT, OVERRIDE_DATE, OVERRIDE_EXEMPT )
+    _fields = ['TaxOverrideType', 'TaxAmount', 'TaxDate', 'Reason']
+
+    @staticmethod
+    def from_data(data):
+        return TaxOverride(**data)
+
+    def clean_me(self):
+        if self.TaxOverrideType == TaxOverride.OVERRIDE_AMOUNT:
+            if not hasattr(self, 'TaxAmount'):
+                raise AvalaraValidationException(AvalaraException.CODE_REQD, 'TaxAmount is required')
+        elif self.TaxOverrideType == TaxOverride.OVERRIDE_DATE:
+            if not hasattr(self, 'TaxDate'):
+                raise AvalaraValidationException(AvalaraException.CODE_REQD, 'TaxDate is required')
+
+    def clean_TaxOverrideType(self):
+        otype = getattr(self, 'TaxOverrideType', None)
+        if otype is None:
+            otype = 'None'
+        if otype not in TaxOverride.OVERRIDE_TYPES:
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_OTYPE, 'TaxOverrideType is not one of the allowed types')
+        setattr(self, 'TaxOverrideType', otype)
+
+    def clean_Reason(self):
+        if not hasattr(self, 'TaxDate'):
+            raise AvalaraValidationException(AvalaraException.CODE_REQD, 'Reason is a required field for tax overrides')
+
+    def clean_TaxDate(self):
+        tax_date = getattr(self, 'TaxDate', None)
+        try:
+            date = Document._clean_date(tax_date)
+            setattr(self, 'TaxDate', date)
+        except ValueError:
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_DATE, 'TaxDate should either be a date object, or a string in this date format: YYYY-MM-DD')
+
+    def clean_TaxAmount(self):
+        amount = getattr(self, 'TaxAmount', None)
+        try:
+            f = Document._clean_float(amount)
+            setattr(self, 'TaxAmount', f)
+        except ValueError:
+            raise AvalaraValidationException(AvalaraException.CODE_BAD_FLOAT, 'TaxAmount should either be a float, or string that is parsable into a float')
 
 
 class Line(AvalaraBase):

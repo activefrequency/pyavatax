@@ -49,6 +49,14 @@ Avalara Address
     :private-members:
     :undoc-members:
 
+Avalara TaxOverride
+---------------
+
+.. autoclass:: TaxOverride
+    :members:
+    :private-members:
+    :undoc-members:
+
 
 .. currentmodule:: pyavatax.base
 

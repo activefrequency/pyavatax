@@ -166,6 +166,7 @@ def test_posttax():
         doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
         doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
         doc.add_line(Amount=10.00)
+        doc.add_line(Amount=10.00)
         # make sure i don't have a doccode
         try:
             doc.DocCode
@@ -177,7 +178,7 @@ def test_posttax():
     assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
-    assert len(tax.TaxLines) == 1
+    assert len(tax.TaxLines) == 2
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
     assert doc.DocCode  # make sure the doccode moved over
@@ -185,6 +186,9 @@ def test_posttax():
         ('pyavatax.api', 'DEBUG', 'None setting default from address code'),
         ('pyavatax.api', 'DEBUG', 'None setting default to address code'),
         ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
+        ('pyavatax.api', 'DEBUG', 'None inserting LineNo 2'),
+        ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
+        ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'INFO', '"POST", %s, %s%s' % (None, api.url, '/'.join([API.VERSION, 'tax', 'get']))),

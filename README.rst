@@ -3,18 +3,24 @@
 PyAvaTax
 =========
 
-Release v\ |version|
-
 What is PyAvaTax?
 ------------------
 
-As of Sept 2012 US internet retailers are required to pay sales tax in all the states they do business. Avalara_ offers a fully featured web-based service to report your transactions, return your sales tax, and store all the information until you need to report it.
-
-Avalara is a US-only service, and thus all amounts passing through their system, and this api, are assumed to be US Dollars (USD)
+Avalara_ offers a fully featured web-based service to report your transactions, return your sales tax, and store all the information until you need to report it.
 
 We developed PyAvaTax as a Python client library for easily integrating with Avalara's RESTful AvaTax API Service to report your transactions.
 
 PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out!
+
+This API is not officially supported by Avalara - it is a third-party library developed and supported by Active Frequency.
+
+Please report bugs using the GitHub issue tracker.
+
+Usage
+-----
+
+***Note***: Avalara is a US-only service, and thus all amounts passing through their system, and this API, are assumed to be US Dollars (USD)
+
 
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
 ::

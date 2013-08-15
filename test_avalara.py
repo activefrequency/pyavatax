@@ -230,6 +230,26 @@ def test_discount():
 
 
 @pytest.mark.post_tax
+@pytest.mark.discount
+@pytest.mark.override
+def test_discount():
+    api = get_api()
+    # dont pass a doccode
+    amount = 10.00
+    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com', Discount=amount)
+    doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    doc.add_line(Amount=amount, Discounted=True)
+    tax_date = datetime.date.today() - datetime.timedelta(days=5)
+    doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_DATE, TaxDate=tax_date, Reason="Tax Date change",)
+    tax = api.post_tax(doc)
+    assert tax.is_success is True
+    assert float(tax.TotalTax) == 0
+    assert float(tax.TotalAmount) == amount
+    assert float(tax.TotalDiscount) == amount
+
+
+@pytest.mark.post_tax
 @pytest.mark.logging
 def test_posttax():
     with LogCapture('pyavatax.api') as l:

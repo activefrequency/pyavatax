@@ -5,6 +5,7 @@
 
 .. _Avalara: http://www.avalara.com
 .. _Basics: basics.html
+.. _Github: https://github.com/activefrequency/pyavatax/issues
 
 PyAvaTax
 =========
@@ -18,7 +19,7 @@ Avalara is a US-only service, and thus all amounts passing through their system,
 
 We developed PyAvaTax as a Python client library for easily integrating with Avalara's RESTful AvaTax API Service to report your transactions.
 
-PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out!
+PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out! If you're running this on a system with Django installed (e.g. we can find Django in the import path) we will attempt to integrate with it. If you don't want this default behavior, please see the Django section on how to prevent it.
 
 AvaTax expects a JSON (or XML) POST to their tax/get/ URI, like this:
 ::
@@ -77,6 +78,8 @@ Or, you can use the library to construct objects from kwargs
 
 
 We have a full-fledged introduction, from installation, logging, making requests, and handling responses, with a full example in the next topic: Basics_
+
+If you have any issues, improvements, requests, or bugs please use Github_
 
 Contents:
 

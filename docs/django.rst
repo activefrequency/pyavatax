@@ -7,6 +7,8 @@ If you are integrating PyAvaTax into a Django environment you are in luck. In ad
 
 This way your clients can see which records failed to make it into the Avalara system, since they don't usually have access to, or care to access, the logs.
 
+If you really don't want any integration with Django you can turn it off by setting `NO_PYAVATAX_INTEGRATION = True` in your settings file.
+
 You can also get at these records:
 ::
     import pyavatax.models AvaTaxRecord

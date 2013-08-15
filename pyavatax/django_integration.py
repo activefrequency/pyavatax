@@ -20,7 +20,7 @@ def get_django_recorder():
     except ImportError:
         return MockDjangoRecorder
     else:
-        if settings.NO_PYAVATAX_INTEGRATION:
+        if hasattr(settings, 'NO_PYAVATAX_INTEGRATION') and settings.NO_PYAVATAX_INTEGRATION:
             return MockDjangoRecorder
         else:
             class RealDjangoRecorder(object):

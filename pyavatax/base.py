@@ -185,8 +185,8 @@ class BaseAPI(object):
                 resp = requests.get(url, **kwargs)
             elif http_method == 'POST':
                 resp = requests.post(url, **kwargs)
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
-            self.logger.error(e)
+        except (requests.exceptions.ConnectionError, requests.exceptions.SSLError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
+            self.logger.warning(e)
             raise AvalaraServerNotReachableException(e)
         if resp.status_code == requests.codes.ok:
             if resp.json is None:

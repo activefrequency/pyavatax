@@ -52,6 +52,8 @@ def test_from_data_example():
         "CustomerCode": "AvaTim",
         "DocCode": "20120613-1",
         "DocType": "SalesOrder",
+        "PosLaneCode": "pyavatax unit test",
+        "Client": "pyavatax",
         "Addresses":
         [
             {

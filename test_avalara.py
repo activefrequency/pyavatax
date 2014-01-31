@@ -3,6 +3,7 @@ from pyavatax.api import API
 import settings_local  # put the below settings into this file, it is in .gitignore
 import datetime
 import pytest
+import uuid
 from testfixtures import LogCapture
 
 
@@ -14,7 +15,6 @@ def get_api(timeout=None):
 def test_avalara_and_http():
     api = get_api()
     data = {
-        "DocDate": "2012-05-11",
         "CustomerCode": "CUST1",
         "CompanyCode": settings_local.AVALARA_COMPANY_CODE,
         "Addresses":
@@ -34,7 +34,15 @@ def test_avalara_and_http():
                 "OriginCode": "1",
                 "Qty": 1,
                 "Amount": 10
+            },
+            {
+                "LineNo": "2",
+                "DestinationCode": "1",
+                "OriginCode": "1",
+                "Qty": 1,
+                "Amount": 10
             }
+
         ]
     }
     stem = '/'.join([api.VERSION, 'tax', 'get'])
@@ -47,10 +55,9 @@ def test_avalara_and_http():
 def test_from_data_example():
     api = get_api()
     data = {
-        "DocDate": "2012-06-13",
         "CompanyCode": settings_local.AVALARA_COMPANY_CODE,
         "CustomerCode": "AvaTim",
-        "DocCode": "20120613-1",
+        "DocCode": uuid.uuid4().hex,
         "DocType": "SalesOrder",
         "PosLaneCode": "pyavatax unit test",
         "Client": "pyavatax",
@@ -87,7 +94,7 @@ def test_from_data_example():
             },
         ],
     }
-    tax = api.post_tax(data)
+    tax = api.post_tax(data, commit=True)
     assert tax.is_success is True
 
 
@@ -101,20 +108,20 @@ def test_discount_from_data_example():
             {'City': u'acton', 'Country': 'US', 'Region': u'MA', 'Line2': u'', 'Line1': u'68 river st', 'PostalCode': u'01720', 'AddressCode': 2}, 
             {'City': 'Concord', 'Country': 'US', 'Region': 'MA', 'Line2': '', 'Line1': '130B Baker Avenue Extension', 'PostalCode': '01742', 'AddressCode': 1} 
         ], 
-        'DocCode': 'liverental593760', 
-        'DocDate': "2013-08-05", 
+        'DocCode': uuid.uuid4().hex, 
         'Lines': [ 
             {'ItemCode': 'canon-eos-1dc', 'Discounted': True, 'LineNo': 1, 'DestinationCode': 2, 'Description': u'Canon EOS 1DC', 'Qty': 1L, 'Amount': 667.0, 'OriginCode': 1}, 
             {'ItemCode': 'canon-24-70-f28l-ii', 'Discounted': True, 'LineNo': 2, 'DestinationCode': 2, 'Description': u'Canon 24-70 f/2.8L II', 'Qty': 1L, 'Amount': 111.0, 'OriginCode': 1}, 
             {'ItemCode': 'sandisk-extreme-pro-cf-128gb', 'Discounted': True, 'LineNo': 3, 'DestinationCode': 2, 'Description': u'SanDisk Extreme Pro CF 128GB', 'Qty': 1L, 'Amount': 83.0, 'OriginCode': 1}, 
             {'ItemCode': 'westcott-icelight', 'Discounted': True, 'LineNo': 4, 'DestinationCode': 2, 'Description': u'Westcott IceLight', 'Qty': 1L, 'Amount': 44.0, 'OriginCode': 1}, 
-            {'ItemCode': 'sennheiser-mke-400-camera-mic', 'Discounted': True, 'LineNo': 5, 'DestinationCode': 2, 'Description': u'Sennheiser MKE 400 On-Camera Mic', 'Qty': 1L, 'Amount': 53.5, 'OriginCode': 1} 
+            {'ItemCode': 'sennheiser-mke-400-camera-mic', 'Discounted': True, 'LineNo': 5, 'DestinationCode': 2, 'Description': u'Sennheiser MKE 400 On-Camera Mic', 'Qty': 1L, 'Amount': 53.5, 'OriginCode': 1},
         ], 
         'DocType': 'SalesOrder', 
         'Discount': str(amount), 
-        'CustomerCode': 10002 
+        'CustomerCode': 'details@activefrequency.com' 
     } 
-    tax = api.post_tax(data)
+    tax = api.post_tax(data, commit=True)
+    print tax.error
     assert tax.is_success is True
     assert float(tax.TotalTax) == 0
     assert float(tax.TotalAmount) == amount
@@ -192,11 +199,12 @@ def test_validation():
 @pytest.mark.testing
 def test_justtozip():
     api = get_api()
-    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='jobelenus@activefrequency.com')
     doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_to_address(Line1="", Line2="", PostalCode="98110")
     doc.add_line(Amount=10.00)
     doc.add_line(Amount=10.00)
+    doc.add_line(TaxCode='FR', Amount='10.00')
     # make sure i don't have a doccode
     try:
         doc.DocCode
@@ -208,7 +216,7 @@ def test_justtozip():
     assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
-    assert len(tax.TaxLines) == 2
+    assert len(tax.TaxLines) == 3
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
     assert doc.DocCode  # make sure the doccode moved over
@@ -220,7 +228,7 @@ def test_discount():
     api = get_api()
     # dont pass a doccode
     amount = 10.00
-    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com', Discount=amount)
+    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='jobelenus@activefrequency.com', Discount=amount)
     doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     doc.add_line(Amount=amount, Discounted=True)
@@ -238,7 +246,7 @@ def test_discount():
     api = get_api()
     # dont pass a doccode
     amount = 10.00
-    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='email@email.com', Discount=amount)
+    doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='override@email.com', Discount=amount)
     doc.add_from_address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     doc.add_line(Amount=amount, Discounted=True)
@@ -262,6 +270,7 @@ def test_posttax():
         doc.add_to_address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
         doc.add_line(Amount=10.00)
         doc.add_line(Amount=10.00)
+        doc.add_line(TaxCode='FR', Amount='12.00')
         # make sure i don't have a doccode
         try:
             doc.DocCode
@@ -273,7 +282,7 @@ def test_posttax():
     assert tax.is_success is True
     assert tax.TotalTax > 0
     assert len(tax.TaxAddresses) == 2
-    assert len(tax.TaxLines) == 2
+    assert len(tax.TaxLines) == 3
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
     assert doc.DocCode  # make sure the doccode moved over
@@ -282,6 +291,9 @@ def test_posttax():
         ('pyavatax.api', 'DEBUG', 'None setting default to address code'),
         ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
         ('pyavatax.api', 'DEBUG', 'None inserting LineNo 2'),
+        ('pyavatax.api', 'DEBUG', 'None inserting LineNo 3'),
+        ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
+        ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
@@ -308,14 +320,59 @@ def test_timeout():
             assert False
     l.check(
         ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
-        ('pyavatax.api', 'ERROR', "HTTPSConnectionPool(host='development.avalara.net', port=443): Request timed out. (timeout=1e-05)")
+        ('pyavatax.api', 'WARNING', "HTTPSConnectionPool(host='development.avalara.net', port=443): Request timed out. (timeout=1e-05)")
     )
+
+
+@pytest.mark.post_tax
+@pytest.mark.exempt
+def test_posttax_commit_exempt():
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    api = get_api()
+    # G = resale, which means exempt from tax
+    doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='exempt@gmail.com', CustomerUsageType='G')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00, Qty=2)
+    doc.add_line(line)
+    doc.add_line(TaxCode='FR', Amount='12.00')
+    tax = api.post_tax(doc, commit=True)
+    assert doc.Commit
+    assert doc.DocType == Document.DOC_TYPE_SALE_INVOICE  # make sure the doc type changes with commit
+    assert tax.is_success is True
+    assert tax.TotalTax == '0'
+    assert len(tax.TaxAddresses) == 2
+    assert len(tax.TaxLines) == 2
+
+
+@pytest.mark.post_tax
+def test_posttax_commit():
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    api = get_api()
+    doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='jobelenus@activefrequency.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00, Qty=2)
+    doc.add_line(line)
+    doc.add_line(TaxCode='FR', Amount='12.00')
+    tax = api.post_tax(doc, commit=True)
+    assert doc.Commit
+    assert doc.DocType == Document.DOC_TYPE_SALE_INVOICE  # make sure the doc type changes with commit
+    assert tax.is_success is True
+    assert tax.TotalTax > 0
+    assert tax.total_tax == tax.TotalTax
+    assert len(tax.TaxAddresses) == 2
+    assert len(tax.TaxLines) == 2
+    assert len(tax.TaxLines[0].TaxDetails) > 0
 
 
 @pytest.mark.post_tax
 @pytest.mark.cancel_tax
 def test_posttax_commit_cancel():
-    import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()
     doc = Document.new_sales_order(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
@@ -323,7 +380,7 @@ def test_posttax_commit_cancel():
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_from_address(from_address)
     doc.add_to_address(to_address)
-    line = Line(Amount=10.00)
+    line = Line(Amount=10.00, Qty=2)
     doc.add_line(line)
     tax = api.post_tax(doc, commit=True)
     assert doc.Commit
@@ -368,10 +425,9 @@ def test_failure_validate_address():
 
 @pytest.mark.override
 def test_override():
-    import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()
-    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='override@email.com')
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_from_address(from_address)
@@ -387,6 +443,27 @@ def test_override():
 
 
 @pytest.mark.override
+def test_negative_override():
+    random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
+    api = get_api()
+    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='override@email.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=10.00)
+    doc.add_line(line)
+    tax = api.post_tax(doc)
+    assert tax.is_success
+    assert tax.total_tax > 0
+    negative_tax = "-%s" % (tax.total_tax,)
+    doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_AMOUNT, TaxAmount=negative_tax, Reason="Return",)
+    tax = api.post_tax(doc)
+    assert tax.is_success
+    assert tax.total_tax == negative_tax
+
+
+@pytest.mark.override
 @pytest.mark.recorder
 @pytest.mark.failure_case
 def test_override_failure():
@@ -395,10 +472,9 @@ def test_override_failure():
     except ImportError:  # no django
         pytest.mark.xfail('This can only be run inside a django environment')
         return
-    import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()
-    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')
+    doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='override@email.com')
     to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
     from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
     doc.add_from_address(from_address)
@@ -423,7 +499,6 @@ def test_recorder():
     except ImportError:  # no django
         pytest.mark.xfail('This can only be run inside a django environment')
         return
-    import uuid
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()
     doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='email@email.com')

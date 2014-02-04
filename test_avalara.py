@@ -442,8 +442,8 @@ def test_override():
     assert tax.TaxDate == tax_date.strftime('%Y-%m-%d')
 
 
-@pytest.mark.override
-def test_negative_override():
+@pytest.mark.return_invoice
+def test_return():
     random_doc_code = uuid.uuid4().hex  # you can't post/cancel the same doc code over and over
     api = get_api()
     doc = Document.new_sales_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='override@email.com')
@@ -456,11 +456,19 @@ def test_negative_override():
     tax = api.post_tax(doc)
     assert tax.is_success
     assert tax.total_tax > 0
-    negative_tax = "-%s" % (tax.total_tax,)
-    doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_AMOUNT, TaxAmount=negative_tax, Reason="Return",)
+    # and return invoice
+    doc = Document.new_return_invoice(DocCode=random_doc_code, DocDate=datetime.date.today(), CustomerCode='override@email.com')
+    to_address = Address(Line1="435 Ericksen Avenue Northeast", Line2="#250", PostalCode="98110")
+    from_address = Address(Line1="100 Ravine Lane NE", Line2="#220", PostalCode="98110")
+    doc.add_from_address(from_address)
+    doc.add_to_address(to_address)
+    line = Line(Amount=-10.00)
+    doc.add_line(line)
+    tax_date = datetime.date.today() - datetime.timedelta(days=5)
+    doc.add_override(TaxOverrideType=TaxOverride.OVERRIDE_DATE, TaxDate=tax_date, Reason="Tax Date change",)
     tax = api.post_tax(doc)
     assert tax.is_success
-    assert tax.total_tax == negative_tax
+    assert float(tax.total_tax) < 0
 
 
 @pytest.mark.override

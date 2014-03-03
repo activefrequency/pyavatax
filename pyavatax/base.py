@@ -171,9 +171,15 @@ class BaseAPI(object):
 
     def _request(self, http_method, stem, data={}, params={}):
         url = '%s/%s' % (self.url, stem)
+        data = json.dumps(data)
+        # getting rid of control characters
+        # that JSON will error out on
+        data = data.replace('\\r', ' ')
+        data = data.replace('\\t', ' ')
+        data = data.replace('\\n', ' ')
         kwargs = {
             'params': params,
-            'data': json.dumps(data),
+            'data': data,
             'headers': self.headers,
             'auth': (self.username, self.password),
             'proxies': self.proxies,

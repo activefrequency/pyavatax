@@ -532,3 +532,22 @@ def test_recorder():
     assert tax.is_success == False
     assert 1 == AvaTaxRecord.failures.filter(doc_code=random_doc_code).count()
     assert 1 == AvaTaxRecord.successes.filter(doc_code=random_doc_code).count()
+
+
+@pytest.mark.json
+def test_bad_json():
+    from pyavatax.api import PostTaxResponse
+    import simplejson
+    def fn():
+        api = get_api()
+        data = {'Addresses': [{'City': u'Chicago', 'Country': 'US', 'Region': u'IL', 'Line2': u'', 'Line1': u'516 N Ogden Ave\r\nMailroom', 'PostalCode': u'60642', 'AddressCode': 2}, {'City': 'Concord', 'Country': 'US', 'Region': 'MA', 'Line2': '', 'Line1': '130B Baker Avenue Extension', 'PostalCode': '01742', 'AddressCode': 1}], 'DocCode': 'adoccode', 'Lines': [{'LineNo': 1, 'DestinationCode': 2, 'Description': u'Product 1', 'Qty': 1L, 'Amount': '161.00', 'OriginCode': 1}], 'DocType': 'SalesOrder', 'CustomerCode': 21051}
+        stem = '/'.join([api.VERSION, 'tax', 'get'])
+        resp = api._post(stem, data)
+        tax_resp = PostTaxResponse(resp)
+        return tax_resp
+    try:
+        fn()
+    except simplejson.JSONDecodeError:
+        assert False
+    else:
+        assert True

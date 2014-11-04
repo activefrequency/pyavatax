@@ -14,7 +14,7 @@ class FailedRecordManager(models.Manager):
     
 
 class AvaTaxRecord(models.Model):
-    doc_code = models.CharField(max_length=255)
+    doc_code = models.CharField(max_length=255, db_index=True)
     failure_details = models.TextField()
     logged_on = models.DateTimeField(auto_now_add=True)
     success_on = models.DateTimeField(blank=True, null=True)

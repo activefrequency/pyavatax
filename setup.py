@@ -10,7 +10,7 @@ setup(
     author = 'John Obelenus',
     author_email = 'jobelenus@activefrequency.com',
     version=version,
-    install_requires = ['requests==1.1', 'decorator==3.4.0', 'suds==0.4'],
+    install_requires = ['requests==1.1', 'decorator==3.4.0', 'suds-jurko==0.6', 'six==1.9.0'],
     package_data = {
         '': ['*.txt', '*.rst', '*.md']
     },

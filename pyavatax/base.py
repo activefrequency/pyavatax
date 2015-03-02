@@ -1,6 +1,7 @@
 import datetime
 import logging
 import json
+import six
 
 import requests
 from pyavatax.django_integration import get_django_recorder
@@ -9,12 +10,11 @@ from pyavatax.django_integration import get_django_recorder
 def str_to_class(klassname):
     """Returns class of string parameter. Requires class to be in module namespace"""
     import sys
-    import types
     try:
         identifier = getattr(sys.modules[__name__], klassname)
     except AttributeError:
         raise NameError("%s doesn't exist." % klassname)
-    if isinstance(identifier, (types.ClassType, types.TypeType)):
+    if isinstance(identifier, six.class_types):
         return identifier
     raise TypeError("%s is not a class." % klassname)
 
@@ -95,7 +95,7 @@ class AvalaraBase(object):
 
     def update(self, *args, **kwargs):
         """Updates kwargs onto attributes of self"""
-        for k, v in kwargs.iteritems():
+        for k, v in six.iteritems(kwargs):
             if k in self._fields:
                 setattr(self, k, v)
             elif k in self._has:  # has an object

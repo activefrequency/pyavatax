@@ -214,7 +214,7 @@ def test_justtozip():
     tax = api.post_tax(doc)
     assert tax.is_success is True
     assert tax.TotalTax > 0
-    assert len(tax.TaxAddresses) == 6
+    assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 3
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
@@ -280,7 +280,7 @@ def test_posttax():
         tax = api.post_tax(doc)
     assert tax.is_success is True
     assert tax.TotalTax > 0
-    assert len(tax.TaxAddresses) == 6
+    assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 3
     assert len(tax.TaxLines[0].TaxDetails) > 0
     assert tax.DocCode
@@ -342,7 +342,7 @@ def test_posttax_commit_exempt():
     assert doc.DocType == Document.DOC_TYPE_SALE_INVOICE  # make sure the doc type changes with commit
     assert tax.is_success is True
     assert tax.TotalTax == '0'
-    assert len(tax.TaxAddresses) == 4
+    assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 2
 
 
@@ -364,7 +364,7 @@ def test_posttax_commit():
     assert tax.is_success is True
     assert tax.TotalTax > 0
     assert tax.total_tax == tax.TotalTax
-    assert len(tax.TaxAddresses) == 4
+    assert len(tax.TaxAddresses) == 2
     assert len(tax.TaxLines) == 2
     assert len(tax.TaxLines[0].TaxDetails) > 0
 

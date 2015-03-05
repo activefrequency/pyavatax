@@ -4,6 +4,7 @@ import settings_local  # put the below settings into this file, it is in .gitign
 import datetime
 import pytest
 import uuid
+import six
 from testfixtures import LogCapture
 
 
@@ -110,18 +111,18 @@ def test_discount_from_data_example():
         ], 
         'DocCode': uuid.uuid4().hex, 
         'Lines': [ 
-            {'ItemCode': 'canon-eos-1dc', 'Discounted': True, 'LineNo': 1, 'DestinationCode': 2, 'Description': u'Canon EOS 1DC', 'Qty': 1L, 'Amount': 667.0, 'OriginCode': 1}, 
-            {'ItemCode': 'canon-24-70-f28l-ii', 'Discounted': True, 'LineNo': 2, 'DestinationCode': 2, 'Description': u'Canon 24-70 f/2.8L II', 'Qty': 1L, 'Amount': 111.0, 'OriginCode': 1}, 
-            {'ItemCode': 'sandisk-extreme-pro-cf-128gb', 'Discounted': True, 'LineNo': 3, 'DestinationCode': 2, 'Description': u'SanDisk Extreme Pro CF 128GB', 'Qty': 1L, 'Amount': 83.0, 'OriginCode': 1}, 
-            {'ItemCode': 'westcott-icelight', 'Discounted': True, 'LineNo': 4, 'DestinationCode': 2, 'Description': u'Westcott IceLight', 'Qty': 1L, 'Amount': 44.0, 'OriginCode': 1}, 
-            {'ItemCode': 'sennheiser-mke-400-camera-mic', 'Discounted': True, 'LineNo': 5, 'DestinationCode': 2, 'Description': u'Sennheiser MKE 400 On-Camera Mic', 'Qty': 1L, 'Amount': 53.5, 'OriginCode': 1},
+            {'ItemCode': 'canon-eos-1dc', 'Discounted': True, 'LineNo': 1, 'DestinationCode': 2, 'Description': u'Canon EOS 1DC', 'Qty': 1, 'Amount': 667.0, 'OriginCode': 1},
+            {'ItemCode': 'canon-24-70-f28l-ii', 'Discounted': True, 'LineNo': 2, 'DestinationCode': 2, 'Description': u'Canon 24-70 f/2.8L II', 'Qty': 1, 'Amount': 111.0, 'OriginCode': 1},
+            {'ItemCode': 'sandisk-extreme-pro-cf-128gb', 'Discounted': True, 'LineNo': 3, 'DestinationCode': 2, 'Description': u'SanDisk Extreme Pro CF 128GB', 'Qty': 1, 'Amount': 83.0, 'OriginCode': 1},
+            {'ItemCode': 'westcott-icelight', 'Discounted': True, 'LineNo': 4, 'DestinationCode': 2, 'Description': u'Westcott IceLight', 'Qty': 1, 'Amount': 44.0, 'OriginCode': 1},
+            {'ItemCode': 'sennheiser-mke-400-camera-mic', 'Discounted': True, 'LineNo': 5, 'DestinationCode': 2, 'Description': u'Sennheiser MKE 400 On-Camera Mic', 'Qty': 1, 'Amount': 53.5, 'OriginCode': 1},
         ], 
         'DocType': 'SalesOrder', 
         'Discount': str(amount), 
         'CustomerCode': 'details@activefrequency.com' 
     } 
     tax = api.post_tax(data, commit=True)
-    print tax.error
+    six.print_(tax.error)
     assert tax.is_success is True
     assert float(tax.TotalTax) == 0
     assert float(tax.TotalAmount) == amount
@@ -539,7 +540,7 @@ def test_bad_json():
     import simplejson
     def fn():
         api = get_api()
-        data = {'Addresses': [{'City': u'Chicago', 'Country': 'US', 'Region': u'IL', 'Line2': u'', 'Line1': u'516 N Ogden Ave\r\nMailroom', 'PostalCode': u'60642', 'AddressCode': 2}, {'City': 'Concord', 'Country': 'US', 'Region': 'MA', 'Line2': '', 'Line1': '130B Baker Avenue Extension', 'PostalCode': '01742', 'AddressCode': 1}], 'DocCode': 'adoccode', 'Lines': [{'LineNo': 1, 'DestinationCode': 2, 'Description': u'Product 1', 'Qty': 1L, 'Amount': '161.00', 'OriginCode': 1}], 'DocType': 'SalesOrder', 'CustomerCode': 21051}
+        data = {'Addresses': [{'City': u'Chicago', 'Country': 'US', 'Region': u'IL', 'Line2': u'', 'Line1': u'516 N Ogden Ave\r\nMailroom', 'PostalCode': u'60642', 'AddressCode': 2}, {'City': 'Concord', 'Country': 'US', 'Region': 'MA', 'Line2': '', 'Line1': '130B Baker Avenue Extension', 'PostalCode': '01742', 'AddressCode': 1}], 'DocCode': 'adoccode', 'Lines': [{'LineNo': 1, 'DestinationCode': 2, 'Description': u'Product 1', 'Qty': 1, 'Amount': '161.00', 'OriginCode': 1}], 'DocType': 'SalesOrder', 'CustomerCode': 21051}
         stem = '/'.join([api.VERSION, 'tax', 'get'])
         resp = api._post(stem, data)
         tax_resp = PostTaxResponse(resp)

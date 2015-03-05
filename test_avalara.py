@@ -196,7 +196,6 @@ def test_validation():
 
 
 @pytest.mark.post_tax
-@pytest.mark.testing
 def test_justtozip():
     api = get_api()
     doc = Document.new_sales_order(DocDate=datetime.date.today(), CustomerCode='jobelenus@activefrequency.com')

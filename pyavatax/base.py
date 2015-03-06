@@ -758,7 +758,7 @@ class TaxAddresses(AvalaraBase):
 
 class TaxDetails(AvalaraBase):
     """Represents TaxDetails response from Avalara"""
-    _fields = ['Country', 'Region', 'JurisType', 'Taxable', 'Rate', 'Tax', 'JurisName', 'TaxName']
+    _fields = ['Country', 'Region', 'JurisType', 'JurisCode', 'Taxable', 'Rate', 'Tax', 'JurisName', 'TaxName']
 
 
 class TaxLines(AvalaraBase):

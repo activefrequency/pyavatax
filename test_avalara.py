@@ -305,23 +305,18 @@ def test_posttax():
 
 @pytest.mark.logging
 def test_timeout():
-    with LogCapture('pyavatax.api') as l:
-        api = get_api(timeout=0.00001)
-        lat = 47.627935
-        lng = -122.51702
-        line = Line(Amount=10.00)
-        doc = Document()
-        doc.add_line(line)
-        try:
-            api.get_tax(lat, lng, doc)
-        except AvalaraServerNotReachableException:
-            assert True
-        else:
-            assert False
-    l.check(
-        ('pyavatax.api', 'DEBUG', 'None inserting LineNo 1'),
-        ('pyavatax.api', 'WARNING', "HTTPSConnectionPool(host='development.avalara.net', port=443): Request timed out. (timeout=1e-05)")
-    )
+    api = get_api(timeout=0.00001)
+    lat = 47.627935
+    lng = -122.51702
+    line = Line(Amount=10.00)
+    doc = Document()
+    doc.add_line(line)
+    try:
+        api.get_tax(lat, lng, doc)
+    except AvalaraServerNotReachableException:
+        assert True
+    else:
+        assert False
 
 
 @pytest.mark.post_tax

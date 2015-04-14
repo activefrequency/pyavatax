@@ -325,7 +325,11 @@ class AvalaraServerException(AvalaraBaseException):
         self.request_data = response.request.body
         self.method = response.request.method
         self.url = response.request.url
-        self.has_details = True if response.json() else False
+        self.has_details = False
+        try:
+            self.has_details = True if response.json() else False
+        except:
+            pass
 
     @property
     def full_request_as_string(self):

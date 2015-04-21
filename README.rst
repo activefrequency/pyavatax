@@ -8,7 +8,7 @@ What is PyAvaTax?
 
 We developed PyAvaTax as a Python client library for easily integrating with Avalara's RESTful AvaTax API Service to report your transactions.
 
-PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out!
+PyAvaTax **does not require Django**, though if you are using a Django system we have some admin-based goodies for you to check out (Django >= 1.6, `see why <https://pyavatax.readthedocs.org/en/latest/django.html>`_ )!
 
 This API is not officially supported by Avalara - it is a third-party library developed and supported by `Active Frequency <http://www.activefrequency.com/>`_.
 

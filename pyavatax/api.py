@@ -44,7 +44,7 @@ class API(BaseAPI):
             raise AvalaraTypeException(AvalaraException.CODE_LATLNG, 'Please pass lat and lng as floats, or Decimal')
         data = {'saleamount': sale_amount} if sale_amount else {'saleamount': doc.total}
         resp = self._get(stem, data)
-        self.logger.info('"GET" %s%s' % (self.url, stem))
+        self.logger.info('"GET" %s%s with: %s' % (self.url, stem, data))
         self.recorder.success(doc)
         return GetTaxResponse(resp)
 
@@ -77,7 +77,7 @@ class API(BaseAPI):
         data = doc.todict()
         resp = self._post(stem, data)
         tax_resp = PostTaxResponse(resp)
-        self.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
+        self.logger.info('"POST", %s, %s%s with: %s' % (getattr(doc, 'DocCode', None), self.url, stem, data))
         if not hasattr(doc, 'DocCode'):
             doc.update_doc_code_from_response(tax_resp)
         self.recorder.success(doc)
@@ -109,7 +109,7 @@ class API(BaseAPI):
         if _doc_id:
             data.update({'DocId': _doc_id})
         resp = self._post(stem, data)
-        self.logger.info('"POST", %s, %s%s' % (getattr(doc, 'DocCode', None), self.url, stem))
+        self.logger.info('"POST", %s, %s%s with: %s' % (getattr(doc, 'DocCode', None), self.url, stem, data))
         self.recorder.success(doc)
         return CancelTaxResponse(resp)
 
@@ -122,7 +122,7 @@ class API(BaseAPI):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, 'Please pass an address or a dictionary to create an Address')
         stem = '/'.join([self.VERSION, 'address', 'validate'])
         resp = self._get(stem, address.todict())
-        self.logger.info('"GET", %s%s' % (self.url, stem))
+        self.logger.info('"GET", %s%s with: %s' % (self.url, stem, address.todict()))
         return ValidateAddressResponse(resp)
 
 

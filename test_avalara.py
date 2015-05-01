@@ -298,7 +298,7 @@ def test_posttax():
         ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting origin code %s' % Address.DEFAULT_FROM_ADDRESS_CODE),
         ('pyavatax.api', 'DEBUG', 'None setting destination code %s' % Address.DEFAULT_TO_ADDRESS_CODE),
-        ('pyavatax.api', 'INFO', '"POST", %s, %s%s' % (None, api.url, '/'.join([API.VERSION, 'tax', 'get']))),
+        ('pyavatax.api', 'INFO', '"POST", %s, %s%s with: %s' % (None, api.url, '/'.join([API.VERSION, 'tax', 'get']), '{\'Addresses\': [{\'PostalCode\': \'98110\', \'AddressCode\': \'1\', \'Line2\': \'#220\', \'Line1\': \'100 Ravine Lane NE\'}, {\'PostalCode\': \'98110\', \'AddressCode\': \'2\', \'Line2\': \'#250\', \'Line1\': \'435 Ericksen Avenue Northeast\'}], \'DocDate\': \'2015-05-01\', \'Lines\': [{\'DestinationCode\': \'2\', \'Amount\': 10.0, \'Qty\': 1, \'LineNo\': 1, \'OriginCode\': \'1\'}, {\'DestinationCode\': \'2\', \'Amount\': 10.0, \'Qty\': 1, \'LineNo\': 2, \'OriginCode\': \'1\'}, {\'TaxCode\': \'FR\', \'DestinationCode\': \'2\', \'Qty\': 1, \'Amount\': 12.0, \'LineNo\': 3, \'OriginCode\': \'1\'}], \'DocType\': \'SalesOrder\', \'Discount\': 0, \'CustomerCode\': \'email@email.com\', \'PaymentDate\': None, \'CompanyCode\': \'PYAVATEST\'}')),
         ('pyavatax.api', 'DEBUG', 'AvaTax assigned %s as DocCode' % doc.DocCode)
     )
 

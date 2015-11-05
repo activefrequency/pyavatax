@@ -36,8 +36,8 @@ Copy & Paste
 If you're looking for something to copy and paste into your python code base and play with, try this block of code. However, I do ask that you continue to read this basics section (at least) to get a better idea of exactly what is going on.
 ::
 
-    import pyavatax
-    api = pyavatax.API(YOUR_AVALARA_ACCOUNT_NUMBER, YOUR_AVALARA_LICENSE_KEY, YOUR_AVALARA_COMPANY_CODE, live=False)
+    from pyavatax.api import API
+    api = API(YOUR_AVALARA_ACCOUNT_NUMBER, YOUR_AVALARA_LICENSE_KEY, YOUR_AVALARA_COMPANY_CODE, live=False)
     data = {
         "DocDate": "2012-06-13",
         "CompanyCode": YOUR_AVALARA_COMPANY_CODE,
@@ -152,10 +152,10 @@ Creating a Document Manually
 ----------------------------
 Looks like:
 ::
-    import pyavatax
-    doc = pyavatax.Document(**kwargs)
-    address = pyavatax.Address(**kwargs)
-    line_item = pyavatax.Line(**kwargs)
+    from pyavatax.base import Document, Address, Line
+    doc = Document(**kwargs)
+    address = Address(**kwargs)
+    line_item = Line(**kwargs)
 
 Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the document. Any keys that are not AvaTax fields will throw an ``AvalaraException``. All the keys **do use AvaTax's camel-case notation**.
 ::

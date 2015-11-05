@@ -550,7 +550,7 @@ class Document(AvalaraBase):
             address = Address(**kwargs)
         if not isinstance(address, Address):
             raise AvalaraTypeException(AvalaraException.CODE_BAD_ADDRESS, '%r is not a %r' % (address, Address))
-        self.Address.append(address)
+        self.Addresses.append(address)
 
     def validate_codes(self):
         """Look through line items making sure that origin and destination codes are set

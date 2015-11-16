@@ -1,14 +1,15 @@
 import decorator
+import json
 from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerException, ErrorResponse
 
 
 @decorator.decorator
 def except_500_and_return(fn, *args, **kwargs):
-    try:
-        return fn(*args, **kwargs)
-    except AvalaraServerException as e:
-        self = args[0]  # the first arg is self
-        self.logger.error(e.full_request_as_string)
+
+    def error_as_resp(args, e):
+        """
+        Always return the error wrapped in a response object
+        """
         resp = ErrorResponse(e.response)
         for arg in args:
             if isinstance(arg, Document):
@@ -16,6 +17,25 @@ def except_500_and_return(fn, *args, **kwargs):
                 break
         return resp
 
+    try:
+        return fn(*args, **kwargs)
+    except AvalaraServerException as e:
+        self = args[0]  # the first arg is self
+        logged = False
+        try:
+            # but don't log the doc status error as an exception
+            error_as_json = json.loads(e.full_request_as_string)
+            if 'DocStatus' in error_as_json:
+                if error_as_json == 'DocStatus is invalid for this operation.':
+                    self.logger.warning(e.full_request_as_string)  # this case is not an error, just log a warning
+                    logged = True
+
+            if not logged:
+                self.logger.exception(e.full_request_as_string)
+            return error_as_resp(args, e)
+        except ValueError:  # json failed to parse
+            self.logger.exception(e.full_request_as_string)
+            return error_as_resp(args, e)
 
 class API(BaseAPI):
 

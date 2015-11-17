@@ -36,8 +36,8 @@ Copy & Paste
 If you're looking for something to copy and paste into your python code base and play with, try this block of code. However, I do ask that you continue to read this basics section (at least) to get a better idea of exactly what is going on.
 ::
 
-    import pyavatax
-    api = pyavatax.API(YOUR_AVALARA_ACCOUNT_NUMBER, YOUR_AVALARA_LICENSE_KEY, YOUR_AVALARA_COMPANY_CODE, live=False)
+    from pyavatax import api as pyavatax_api
+    api = pyavatax_api.API(YOUR_AVALARA_ACCOUNT_NUMBER, YOUR_AVALARA_LICENSE_KEY, YOUR_AVALARA_COMPANY_CODE, live=False)
     data = {
         "DocDate": "2012-06-13",
         "CompanyCode": YOUR_AVALARA_COMPANY_CODE,
@@ -79,7 +79,7 @@ If you're looking for something to copy and paste into your python code base and
     }
     try:
         tax = api.post_tax(data)
-    except pyavatax.AvalaraServerNotReachableException:
+    except pyavatax_api.AvalaraServerNotReachableException:
         raise Exception('Avalara is currently down')
     else:  # try else runs whenever there is no exception
         if tax.is_success is True:
@@ -92,8 +92,8 @@ Instantiating the API
 ---------------------
 Looks like:
 ::
-    import pyavatax
-    api = pyavatax.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
+    from pyavatax import api as pyavatax_api
+    api = pyavatax_api.API(YOUR_ACCOUNT_NUMBER, YOUR_LICENSE_NUMBER, YOUR_COMPANY_CODE, live=True/False)
 
 Once you have an account with AvaTax their dashboard page contains the account number and license number. You can choose a meaningful company code. When live is `False`, the request will be sent to Avalara's test environment. When it is is `True` it will be sent to the production environment.
 
@@ -102,14 +102,14 @@ Creating a Document From Data
 -----------------------------
 Looks like:
 ::
-    import pyavatax
-    doc = Document.from_data(dictionary_data)
+    from pyavatax import base as pyavatax_base
+    doc = pyavatax_base.Document.from_data(dictionary_data)
     
 The ``dictionary_data`` will be validated against the formatting expected by AvaTax. An ``AvalaraException`` will be raised in the cases it does not validate.
 
 For all the API calls you can pass a dictionary, or an object:
 ::
-    doc = Document.from_data(dictionary_data)
+    doc = pyavatax_base.Document.from_data(dictionary_data)
     tax = api.post_tax(doc)
     # this line performs the same operation as the above two
     tax = api.post_tax(data_dictionary)
@@ -152,10 +152,10 @@ Creating a Document Manually
 ----------------------------
 Looks like:
 ::
-    import pyavatax
-    doc = pyavatax.Document(**kwargs)
-    address = pyavatax.Address(**kwargs)
-    line_item = pyavatax.Line(**kwargs)
+    from pyavatax import base as pyavatax_base
+    doc = pyavatax_base.Document(**kwargs)
+    address = pyavatax_base.Address(**kwargs)
+    line_item = pyavatax_base.Line(**kwargs)
 
 Use the ``kwargs`` parameter to send all the relevant AvaTax fields into the document. Any keys that are not AvaTax fields will throw an ``AvalaraException``. All the keys **do use AvaTax's camel-case notation**.
 ::

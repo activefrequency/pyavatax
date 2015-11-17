@@ -2,7 +2,7 @@ from distutils.core import setup
 # python setup.py sdist
 # python setup.py sdist bdist_wininst upload
 
-version = __import__('pyavatax').get_version()
+version = __import__('pyavatax').__version__
 
 setup(
     name='PyAvaTax',

@@ -1,6 +1,6 @@
 import decorator
 import json
-from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerException, ErrorResponse
+from pyavatax.base import Document, Address, BaseResponse, BaseAPI, AvalaraException, AvalaraTypeException, AvalaraValidationException, AvalaraServerException, ErrorResponse, AvalaraServerNotReachableException
 
 
 @decorator.decorator

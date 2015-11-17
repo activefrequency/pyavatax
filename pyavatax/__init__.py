@@ -1,12 +1,9 @@
-VERSION = (1, 3, 3)
-
-
-from .api import API
-from .base import Document, Address, Line
-
-
-__all__ = ['API', 'Document', 'Address', 'Line', 'get_version']
+VERSION = (1, 3, 4)
 
 
 def get_version():
     return ".".join([str(v) for v in VERSION])
+
+
+__version__ = get_version()
+__all__ = ['get_version', '__version__']

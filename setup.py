@@ -11,7 +11,7 @@ setup(
     author = 'John Obelenus',
     author_email = 'jobelenus@activefrequency.com',
     version=version,
-    install_requires = ['requests==2.5.3', 'decorator==3.4.0', 'six==1.9.0'],
+    install_requires = ['requests>=2.5.3,<3', 'decorator>=3.4.0', 'six>=1.9.0'],
     package_data = {
         '': ['*.txt', '*.rst', '*.md']
     },

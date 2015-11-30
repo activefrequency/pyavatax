@@ -1,4 +1,4 @@
-import datetime
+from django.utils import timezone
 
 
 class MockDjangoRecorder(object):
@@ -30,5 +30,5 @@ def get_django_recorder():
 
                 @staticmethod
                 def success(doc):
-                    AvaTaxRecord.objects.filter(doc_code=getattr(doc, 'DocCode', None)).update(success_on=datetime.datetime.now())
+                    AvaTaxRecord.objects.filter(doc_code=getattr(doc, 'DocCode', None)).update(success_on=timezone.now())
             return RealDjangoRecorder

@@ -338,6 +338,10 @@ class AvalaraServerException(AvalaraBaseException):
         return fmt % (repr(self.status_code), repr(self.method), repr(self.url), repr(self.request_data), repr(self.errors))
 
     @property
+    def errors_as_dict(self):
+        return self.errors
+
+    @property
     def errors(self):
         """Will return an ErrorResponse details property, or the raw text server response"""
         return ErrorResponse(self.response)._details if self.has_details else self.raw_response

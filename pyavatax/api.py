@@ -23,12 +23,12 @@ def except_500_and_return(fn, *args, **kwargs):
         self = args[0]  # the first arg is self
         logged = False
         try:
-            # but don't log the doc status error as an exception
-            error_as_json = json.loads(e.full_request_as_string)
-            if 'DocStatus' in error_as_json:
-                if error_as_json == 'DocStatus is invalid for this operation.':
-                    self.logger.warning(e.full_request_as_string)  # this case is not an error, just log a warning
-                    logged = True
+            # don't log the doc status error as an exception
+            for err in e.error_as_dict:
+                if 'DocStatus' in err.keys():
+                    if 'DocStatus is invalid for this operation.' in err.values():
+                        self.logger.warning(e.full_request_as_string)  # this case is not an error, just log a warning
+                        logged = True
 
             if not logged:
                 self.logger.exception(e.full_request_as_string)

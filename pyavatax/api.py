@@ -24,7 +24,7 @@ def except_500_and_return(fn, *args, **kwargs):
         logged = False
         try:
             # don't log the doc status error as an exception
-            for err in e.error_as_dict:
+            for err in e.errors_as_dict:
                 if 'DocStatus' in err.keys():
                     if 'DocStatus is invalid for this operation.' in err.values():
                         self.logger.warning(e.full_request_as_string)  # this case is not an error, just log a warning

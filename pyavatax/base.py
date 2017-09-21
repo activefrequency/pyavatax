@@ -377,7 +377,7 @@ class Document(AvalaraBase):
     CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
 
 
-    _fields = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode', 'PosLaneCode', 'Client']
+    _fields = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode', 'PosLaneCode', 'Client', 'BusinessIdentificationNo']
     _contains = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
     _has = ['DetailLevel', 'TaxOverride']
 

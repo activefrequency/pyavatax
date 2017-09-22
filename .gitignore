@@ -7,3 +7,4 @@ dist/
 settings_local.py
 env/
 .idea/
+.cache/

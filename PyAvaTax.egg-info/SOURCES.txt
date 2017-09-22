@@ -1,0 +1,14 @@
+README.rst
+setup.py
+PyAvaTax.egg-info/PKG-INFO
+PyAvaTax.egg-info/SOURCES.txt
+PyAvaTax.egg-info/dependency_links.txt
+PyAvaTax.egg-info/requires.txt
+PyAvaTax.egg-info/top_level.txt
+pyavatax/__init__.py
+pyavatax/admin.py
+pyavatax/api.py
+pyavatax/base.py
+pyavatax/django_integration.py
+pyavatax/models.py
+pyavatax/version.py

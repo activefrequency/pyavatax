@@ -8,4 +8,3 @@ settings_local.py
 env/
 .idea/
 .cache/
-PyAvaTax.egg-info/

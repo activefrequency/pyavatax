@@ -110,7 +110,7 @@ class AvalaraBase(object):
                     if isinstance(_v, klass):
                         getattr(self, k).append(_v)
                     elif isinstance(_v, dict):
-                        getattr(self, k).append(klass(allow_new_fields=self.allow_new_fields,**_v))
+                        getattr(self, k).append(klass(allow_new_fields=self.allow_new_fields, **_v))
             else:
                 self._invalid_field(k)
         self.clean()
@@ -179,7 +179,6 @@ class BaseAPI(object):
         data = data.replace('\\n', ' ')
         kwargs = {
             'params': params,
-            'data': data,
             'headers': self.headers,
             'auth': (self.username, self.password),
             'proxies': self.proxies,
@@ -190,6 +189,7 @@ class BaseAPI(object):
             if http_method == 'GET':
                 resp = requests.get(url, **kwargs)
             elif http_method == 'POST':
+                kwargs.update({'data': data})
                 resp = requests.post(url, **kwargs)
         except (requests.exceptions.ConnectionError, requests.exceptions.SSLError, requests.exceptions.HTTPError, requests.exceptions.Timeout) as e:
             self.logger.warning(e)
@@ -307,7 +307,7 @@ class AvalaraValidationException(AvalaraException):
 
 class AvalaraServerNotReachableException(AvalaraBaseException):
     """Raised when the AvaTax service is unreachable for any reason and no response is received"""
-    
+
     def __init__(self, request_exception, *args, **kwargs):
         self.request_exception = request_exception
 
@@ -375,7 +375,6 @@ class Document(AvalaraBase):
     CANCEL_DOC_VOIDED = 'DocVoided'
     CANCEL_ADJUSTMENT_CANCELED = 'AdjustmentCanceled'
     CANCEL_CODES = (CANCEL_POST_FAILED, CANCEL_DOC_DELETED, CANCEL_DOC_VOIDED, CANCEL_ADJUSTMENT_CANCELED)
-
 
     _fields = ['DocType', 'DocId', 'DocCode', 'DocDate', 'CompanyCode', 'CustomerCode', 'Discount', 'Commit', 'CustomerUsageType', 'PurchaseOrderNo', 'ExemptionNo', 'PaymentDate', 'ReferenceCode', 'PosLaneCode', 'Client']
     _contains = ['Lines', 'Addresses']  # the automatic parsing in `def update` doesn't work here, but its never invoked here
@@ -601,7 +600,7 @@ class TaxOverride(AvalaraBase):
     OVERRIDE_AMOUNT = 'TaxAmount'
     OVERRIDE_DATE = 'TaxDate'
     OVERRIDE_EXEMPT = 'Exemption'
-    OVERRIDE_TYPES = ( OVERRIDE_NONE, OVERRIDE_AMOUNT, OVERRIDE_DATE, OVERRIDE_EXEMPT )
+    OVERRIDE_TYPES = (OVERRIDE_NONE, OVERRIDE_AMOUNT, OVERRIDE_DATE, OVERRIDE_EXEMPT)
     _fields = ['TaxOverrideType', 'TaxAmount', 'TaxDate', 'Reason']
 
     @staticmethod

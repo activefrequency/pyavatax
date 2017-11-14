@@ -1,8 +1,5 @@
-from django.utils import timezone
-
-
 class MockDjangoRecorder(object):
-    
+
     @staticmethod
     def failure(doc, response):
         pass
@@ -15,6 +12,7 @@ class MockDjangoRecorder(object):
 def get_django_recorder():
     try:
         import django
+        from django.utils import timezone
         from django.conf import settings
         from pyavatax.models import AvaTaxRecord
     except ImportError:

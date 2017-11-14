@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 from setuptools import setup, find_packages
 # python setup.py sdist
-# python setup.py sdist bdist_wininst upload
+# python setup.py sdist bdist_wininst
+# twine upload dist/*
 
 version = __import__('pyavatax').__version__
 

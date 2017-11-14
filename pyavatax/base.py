@@ -4,7 +4,11 @@ import json
 import six
 
 import requests
-from pyavatax.django_integration import get_django_recorder
+
+try:
+    from pyavatax.django_integration import get_django_recorder
+except ImportError:
+    get_django_recorder = None
 
 
 def str_to_class(klassname):
@@ -159,7 +163,7 @@ class BaseAPI(object):
         self.password = password
         self.timeout = timeout or BaseAPI.default_timeout
         self.logger = AvalaraLogging.get_logger()
-        if recorder is None:
+        if recorder is None and get_django_recorder is not None:
             recorder = get_django_recorder()
         self.recorder = recorder
 

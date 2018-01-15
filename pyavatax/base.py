@@ -188,6 +188,7 @@ class BaseAPI(object):
         resp = None
         try:
             if http_method == 'GET':
+                kwargs.pop('data')
                 resp = requests.get(url, **kwargs)
             elif http_method == 'POST':
                 resp = requests.post(url, **kwargs)

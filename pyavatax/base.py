@@ -307,7 +307,7 @@ class AvalaraValidationException(AvalaraException):
 
 class AvalaraServerNotReachableException(AvalaraBaseException):
     """Raised when the AvaTax service is unreachable for any reason and no response is received"""
-    
+
     def __init__(self, request_exception, *args, **kwargs):
         self.request_exception = request_exception
 
@@ -647,7 +647,7 @@ class TaxOverride(AvalaraBase):
 
 class Line(AvalaraBase):
     """Represents an Avalara Line"""
-    _fields = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2']
+    _fields = ['LineNo', 'DestinationCode', 'OriginCode', 'Qty', 'Amount', 'ItemCode', 'TaxCode', 'CustomerUsageType', 'Description', 'Discounted', 'TaxIncluded', 'Ref1', 'Ref2', 'TaxOverride']
 
     def __init__(self, *args, **kwargs):
         if 'Qty' not in kwargs:

@@ -1,6 +1,16 @@
 PyAvaTax
 =========
 
+NOTE: THIS LIBRARY IS DEPRECATED
+--------------------------------
+
+We recommend you use the official SDK. See:
+
+https://pypi.org/project/Avalara/
+
+https://www.avalara.com/us/en/blog/2018/04/introducing-the-new-python-sdk.html
+
+
 What is PyAvaTax?
 ------------------
 

@@ -3,17 +3,17 @@ from unittest import TestCase
 from pyavatax.base import Document
 
 
-class TestBusinessIdentificationNo(TestCase):
+class TestCurrencyCode(TestCase):
 
-    def test_todict_if_business_identification_no_is_set(self):
+    def test_currency_code_is_set_in_document_object(self):
+        currency = 'gbp'
         doc = Document(
             DocType='SalesInvoice',
             CustomerCode='123456789',
             DocCode='12345',
-            CompanyCode='COMPANY_CODE'
+            CompanyCode='COMPANY_CODE',
+            CurrencyCode=currency
         )
-
-        doc.BusinessIdentificationNo = 'GB999 999'
 
         doc.add_from_address(
             Line1='000 Main Street',
@@ -41,6 +41,5 @@ class TestBusinessIdentificationNo(TestCase):
 
         dictionary = doc.todict()
 
-        self.assertIn("BusinessIdentificationNo", dictionary.keys())
-        self.assertEqual(dictionary.get("BusinessIdentificationNo"),
-                         "GB999 999")
+        self.assertIn("CurrencyCode", dictionary.keys())
+        self.assertEqual(dictionary.get("CurrencyCode"), currency)

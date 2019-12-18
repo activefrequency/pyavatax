@@ -1,6 +1,5 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 
-from pyavatax.api import API
 from pyavatax.base import Document
 
 
@@ -43,4 +42,5 @@ class TestBusinessIdentificationNo(TestCase):
         dictionary = doc.todict()
 
         self.assertIn("BusinessIdentificationNo", dictionary.keys())
-        self.assertEqual(dictionary.get("BusinessIdentificationNo"), "GB999 999")
+        self.assertEqual(dictionary.get("BusinessIdentificationNo"),
+                         "GB999 999")

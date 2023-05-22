@@ -1,6 +1,6 @@
 # if you use pip to do installations, these are the dependencies
 
-requests==2.20.0  # for all http connection
+requests==2.31.0  # for all http connection
 decorator==3.4.0  # to preserve introspection funcsig integrity
 suds-jurko==0.6
 six==1.9.0
